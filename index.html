@@ -1,1 +1,373 @@
-<h1>safebridge-ai</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SafeBridge AI - Crypto Risk Assessment for Index Fund Investors</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #F5F7FA;
+      color: #1A1A2E;
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      background: #fff;
+      border-bottom: 1px solid #E8ECF0;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo { font-size: 18px; font-weight: 600; color: #185FA5; }
+    .nav-sub { font-size: 13px; color: #6B7280; }
+
+    /* HERO */
+    .hero {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 56px 24px 40px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: 26px;
+      font-weight: 600;
+      color: #1A1A2E;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    .hero p {
+      font-size: 15px;
+      color: #6B7280;
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+
+    /* SSI BUTTONS */
+    .ssi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .ssi-btn {
+      background: #fff;
+      border: 1.5px solid #E8ECF0;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.15s;
+      text-align: left;
+    }
+    .ssi-btn:hover { border-color: #93C5FD; background: #F0F7FF; }
+    .ssi-btn.selected { border: 2px solid #185FA5; background: #EFF6FF; }
+    .ssi-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .ssi-label { font-size: 14px; font-weight: 500; flex: 1; }
+    .help-btn {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #F3F4F6; border: 1px solid #D1D5DB;
+      font-size: 11px; color: #6B7280;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .help-btn:hover { background: #DBEAFE; color: #185FA5; }
+
+    /* CUSTOM INPUT */
+    .custom-wrap {
+      position: relative;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .custom-wrap input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid #E8ECF0;
+      border-radius: 12px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .custom-wrap input:focus { border-color: #185FA5; }
+    .suggest-list {
+      position: absolute;
+      top: 100%;
+      left: 0; right: 0;
+      background: #fff;
+      border: 1px solid #E8ECF0;
+      border-radius: 12px;
+      margin-top: 4px;
+      z-index: 10;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      display: none;
+    }
+    .suggest-item {
+      padding: 11px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    .suggest-item:last-child { border-bottom: none; }
+    .suggest-item:hover { background: #F0F7FF; }
+    .suggest-ticker { font-weight: 600; min-width: 48px; }
+    .suggest-name { color: #6B7280; flex: 1; }
+    .suggest-tag {
+      font-size: 11px; padding: 2px 8px;
+      border-radius: 20px; background: #EFF6FF; color: #185FA5;
+    }
+
+    /* DIAGNOSE BUTTON */
+    .diagnose-btn {
+      width: 100%;
+      padding: 16px;
+      background: #185FA5;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-bottom: 16px;
+    }
+    .diagnose-btn:hover { background: #0C447C; }
+
+    /* HINTS */
+    .hint { font-size: 12px; color: #9CA3AF; margin-bottom: 6px; }
+    .disclaimer {
+      font-size: 11px; color: #9CA3AF;
+      line-height: 1.6;
+      padding: 0 8px;
+    }
+    .no-wallet {
+      font-size: 12px; color: #059669;
+      margin-top: 10px;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+    }
+
+    /* TOOLTIP MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 320px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+    .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+    .modal-body { font-size: 14px; color: #6B7280; line-height: 1.7; margin-bottom: 14px; }
+    .modal-risk {
+      font-size: 12px; padding: 4px 12px;
+      border-radius: 20px; display: inline-block; margin-bottom: 16px;
+    }
+    .modal-close {
+      font-size: 14px; color: #185FA5;
+      background: none; border: none; cursor: pointer; padding: 0;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      font-size: 12px;
+      color: #9CA3AF;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">SafeBridge AI</span>
+  <span class="nav-sub">Crypto Risk Assessment</span>
+</nav>
+
+<div class="hero">
+  <h1>Compare Crypto with S&P500</h1>
+  <p>For investors who know index funds.<br>
+  Select a crypto index and get an instant risk diagnosis<br>
+  compared to your familiar S&P500.</p>
+
+  <div class="ssi-grid">
+    <div class="ssi-btn selected" onclick="selectSSI(this,'MAG7.ssi')">
+      <div class="ssi-dot" style="background:#2563EB;"></div>
+      <span class="ssi-label">MAG7.ssi</span>
+      <div class="help-btn" onclick="event.stopPropagation();showModal('mag7')">?</div>
+    </div>
+    <div class="ssi-btn" onclick="selectSSI(this,'MEME.ssi')">
+      <div class="ssi-dot" style="background:#DC2626;"></div>
+      <span class="ssi-label">MEME.ssi</span>
+      <div class="help-btn" onclick="event.stopPropagation();showModal('meme')">?</div>
+    </div>
+    <div class="ssi-btn" onclick="selectSSI(this,'DEFI.ssi')">
+      <div class="ssi-dot" style="background:#059669;"></div>
+      <span class="ssi-label">DEFI.ssi</span>
+      <div class="help-btn" onclick="event.stopPropagation();showModal('defi')">?</div>
+    </div>
+    <div class="ssi-btn" onclick="selectSSI(this,'custom')">
+      <div class="ssi-dot" style="background:#D1D5DB;"></div>
+      <span class="ssi-label">Enter manually</span>
+    </div>
+  </div>
+
+  <div class="custom-wrap" id="custom-wrap">
+    <input
+      type="text"
+      id="custom-input"
+      placeholder="e.g. BTC, Solana, PEPE..."
+      oninput="onInput(this.value)"
+      onblur="setTimeout(hideSuggest,150)"
+      autocomplete="off"
+    />
+    <div class="suggest-list" id="suggest-list"></div>
+  </div>
+
+  <button class="diagnose-btn" onclick="diagnose()">Analyze Risk →</button>
+
+  <p class="hint">Free · No signup required · Powered by SoSoValue API</p>
+  <p class="disclaimer">
+    This service provides data-driven simulation, not financial advice.<br>
+    Investment decisions are your own responsibility.
+  </p>
+  <p class="no-wallet">✓ No wallet connection or personal data required</p>
+</div>
+
+<!-- TOOLTIP MODAL -->
+<div class="modal-overlay" id="modal" onclick="hideModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <p class="modal-title" id="modal-title"></p>
+    <p class="modal-body" id="modal-body"></p>
+    <span class="modal-risk" id="modal-risk"></span><br>
+    <button class="modal-close" onclick="hideModal()">Close</button>
+  </div>
+</div>
+
+<footer>
+  SafeBridge AI — Built for SoSoValue × AKINDO Buildathon 2026<br>
+  Powered by SoSoValue API · CoinGecko · OpenRouter
+</footer>
+
+<script>
+const COINS = [
+  {ticker:'BTC', name:'Bitcoin', cat:'Major'},
+  {ticker:'ETH', name:'Ethereum', cat:'Major'},
+  {ticker:'SOL', name:'Solana', cat:'Major'},
+  {ticker:'BNB', name:'BNB', cat:'Major'},
+  {ticker:'XRP', name:'XRP', cat:'Major'},
+  {ticker:'DOGE', name:'Dogecoin', cat:'Meme'},
+  {ticker:'SHIB', name:'Shiba Inu', cat:'Meme'},
+  {ticker:'PEPE', name:'PEPE', cat:'Meme'},
+  {ticker:'AVAX', name:'Avalanche', cat:'DeFi'},
+  {ticker:'LINK', name:'Chainlink', cat:'DeFi'},
+  {ticker:'UNI', name:'Uniswap', cat:'DeFi'},
+  {ticker:'ADA', name:'Cardano', cat:'Other'},
+  {ticker:'DOT', name:'Polkadot', cat:'Other'},
+  {ticker:'LTC', name:'Litecoin', cat:'Other'},
+];
+
+const TIPS = {
+  mag7: {
+    title: 'What is MAG7.ssi?',
+    body: 'An index token diversified across 7 major cryptos including BTC and ETH. Think of it as the S&P500 equivalent in crypto — the lowest risk SSI option.',
+    risk: 'Risk: Low–Medium',
+    bg: '#EFF6FF', color: '#1D4ED8'
+  },
+  meme: {
+    title: 'What is MEME.ssi?',
+    body: 'An index of meme coins like DOGE and SHIB. High volatility, high potential returns — suited for experienced investors.',
+    risk: 'Risk: High',
+    bg: '#FEF2F2', color: '#991B1B'
+  },
+  defi: {
+    title: 'What is DEFI.ssi?',
+    body: 'An index of DeFi-related tokens like Uniswap and AAVE. Gives you diversified exposure to the decentralized finance ecosystem.',
+    risk: 'Risk: Medium–High',
+    bg: '#ECFDF5', color: '#065F46'
+  }
+};
+
+let selected = 'MAG7.ssi';
+
+function selectSSI(el, val) {
+  document.querySelectorAll('.ssi-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selected = val;
+  document.getElementById('custom-wrap').style.display = val === 'custom' ? 'block' : 'none';
+}
+
+function onInput(v) {
+  const list = document.getElementById('suggest-list');
+  if (!v) { list.style.display = 'none'; return; }
+  const q = v.toLowerCase();
+  const matches = COINS.filter(c =>
+    c.name.toLowerCase().includes(q) || c.ticker.toLowerCase().includes(q)
+  ).slice(0, 6);
+  if (!matches.length) { list.style.display = 'none'; return; }
+  list.innerHTML = matches.map(c =>
+    `<div class="suggest-item" onmousedown="pickCoin('${c.ticker}')">
+      <span class="suggest-ticker">${c.ticker}</span>
+      <span class="suggest-name">${c.name}</span>
+      <span class="suggest-tag">${c.cat}</span>
+    </div>`
+  ).join('');
+  list.style.display = 'block';
+}
+
+function pickCoin(ticker) {
+  document.getElementById('custom-input').value = ticker;
+  selected = ticker;
+  hideSuggest();
+}
+
+function hideSuggest() {
+  const l = document.getElementById('suggest-list');
+  if (l) l.style.display = 'none';
+}
+
+function showModal(key) {
+  const t = TIPS[key];
+  document.getElementById('modal-title').textContent = t.title;
+  document.getElementById('modal-body').textContent = t.body;
+  const r = document.getElementById('modal-risk');
+  r.textContent = t.risk;
+  r.style.background = t.bg;
+  r.style.color = t.color;
+  document.getElementById('modal').classList.add('show');
+}
+
+function hideModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+
+function diagnose() {
+  const target = selected === 'custom'
+    ? (document.getElementById('custom-input').value || 'BTC')
+    : selected;
+  // TODO: result.htmlに遷移（Wave1実装予定）
+  alert(`Analyzing ${target}...\n\nResult page coming in Wave 1!`);
+}
+</script>
+
+</body>
+</html>

@@ -364,8 +364,7 @@ function diagnose() {
   const target = selected === 'custom'
     ? (document.getElementById('custom-input').value || 'BTC')
     : selected;
-  // TODO: result.htmlに遷移（Wave1実装予定）
-  alert(`Analyzing ${target}...\n\nResult page coming in Wave 1!`);
+  location.href = `result.html?ticker=${target}`;
 }
 </script>
 

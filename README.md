@@ -76,13 +76,14 @@ User Input (Token / SSI name)
 ## 📊 Impact
 
 ### Market Size
-- **Target:** 4 million index fund investors in Japan
-- **Potential SSI buyers:** 200,000 (5% conversion rate)
-- **Competitor target:** 50,000 pro traders
+- **Global target:** 70+ million S&P500 index fund investors
+- **Initial focus:** Asia-Pacific retail investors
+- **Potential SSI buyers:** 3.5 million (5% conversion rate)
+- **Competitor target:** 50,000 pro traders globally
 
 ### Contribution to SoSoValue
 - **Direct SSI onboarding** driving revenue
-- Opening new retail investor segments
+- Opening untapped retail investor segments
 - Healthier crypto market ecosystem
 
 ---
@@ -111,9 +112,18 @@ cd safebridge-ai
 Create a `.env` file:
 
 ```env
-SOSOVALUE_API_KEY=your_key
-COINGECKO_API_KEY=your_key
-OPENROUTER_API_KEY=your_key
+# Get your API keys from:
+# SoSoValue: https://sosovalue.com/api
+# CoinGecko: https://www.coingecko.com/api
+# OpenRouter: https://openrouter.ai/keys
+
+SOSOVALUE_API_KEY=your_sosovalue_key_here
+COINGECKO_API_KEY=your_coingecko_key_here
+OPENROUTER_API_KEY=your_openrouter_key_here
+```
+
+⚠️ Never commit your `.env` file.
+
 ```
 
 ### 3. Run locally
@@ -130,11 +140,11 @@ Push to `main` → Vercel auto-deploys
 
 ## 🔌 API Usage
 
-| API | Purpose |
-|---|---|
-| **SoSoValue** | Price, ETF flows, VC backers, SSI data |
-| **CoinGecko** | S&P500 comparison, historical prices |
-| **OpenRouter** | AI recommendations |
+| API | Endpoints Used | Purpose |
+|---|---|---|
+| **SoSoValue** | `/currencies`, `/etfs`, `/indices` | Price, ETF flows, SSI index data |
+| **CoinGecko** | `/coins/{id}/market_chart` | S&P500 correlation analysis |
+| **OpenRouter** | `claude-3-haiku`, `gpt-3.5-turbo` | Plain-language recommendations |
 
 ---
 

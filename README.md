@@ -162,8 +162,8 @@ Push to `main` → Vercel auto-deploys
 | Wave | Goals |
 |---|---|
 | **Wave 1** | SBSI, SSI onboarding, live demo |
-| **Wave 2** | Backtest, JA language |
-| **Wave 3** | PWA, ZH support |
+| **Wave 2** | Real data validation, backtest, multilingual (JA) |
+| **Wave 3** | PWA, community features, global expansion (ZH) |
 
 ---
 
@@ -172,7 +172,7 @@ Push to `main` → Vercel auto-deploys
 | Other Teams | SafeBridge |
 |---|---|
 | Tech & features | **Market size × SoSoValue contribution** |
-| 50K traders | **4M investors** |
+| 50K traders | **70M+ investors globally** |
 | Indirect SSI | **Direct SSI onboarding** |
 
 ---

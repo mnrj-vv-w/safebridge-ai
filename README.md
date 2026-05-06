@@ -1,80 +1,103 @@
-# SafeBridge AI 🌉
+# SafeBridge AI
 
-> AI-powered crypto risk assessment for traditional index fund investors
+## Converting Fear into On-chain Action
 
-**Compare crypto assets with S&P500 — in plain language you already understand.**
+> Bridging **70+ million S&P500 investors worldwide** to crypto through **SoSoValue SSI**
 
 🔗 **Live Demo**: [safebridge-ai.vercel.app](https://safebridge-ai.vercel.app)
 
 ---
 
-## What is SafeBridge AI?
+## 🎯 The Problem
 
-SafeBridge AI is built for investors who understand S&P500 and index funds, but find crypto intimidating.
+**70+ million investors globally hold S&P500 index funds.**
 
-Instead of showing raw on-chain data, SafeBridge AI:
-- Compares crypto risk **directly against S&P500**
-- Scores project safety using **VC backers, TVL, and ETF flows**
-- Gives a clear **"what should I do?"** recommendation powered by AI
-- Shows **backtest results** so you can trust the signal
+**But less than 5% own crypto.**
 
-> "If S&P500 drops -5%, this SSI index could drop -10~25%. Here's what to do."
+Why?
+- Scared (68%)
+- Don't understand (52%)
+- Fear of losing money (47%)
+
+SafeBridge AI solves this by:
+- ✅ Comparing crypto risk **directly against S&P500**
+- ✅ Scoring safety using **institutional data (VC, ETF flows)**
+- ✅ Providing **plain-language AI recommendations**
+- ✅ **Guiding users to SoSoValue SSI** for safer entry
 
 ---
 
-## Key Features
+## 🚀 Key Features
 
 | Feature | Description |
 |---|---|
-| 🔴🟡🟢 Risk Score | Intuitive signal light scoring (0–100) |
-| 📊 S&P500 Comparison | Risk expressed as a multiple of familiar benchmarks |
-| 🔍 Safety Layer | VC backer verification, fund flow analysis |
-| 🤖 AI Recommendation | Plain-language action advice via OpenRouter |
-| 📈 Backtest | Historical signal accuracy vs S&P500 |
-| 🔒 Security Guide | Built-in safety checklist for crypto beginners |
+| 🔴🟡🟢 **SBSI Score** | SafeBridge Sentiment Index (0–100) adjusted for index fund investors |
+| 📊 **S&P500 Comparison** | Risk expressed as a multiple of familiar benchmarks |
+| 🔍 **Safety Layer** | VC backer verification, ETF flow analysis |
+| 🤖 **AI Recommendation** | Plain-language action advice via OpenRouter |
+| 📈 **Backtest** | Historical signal accuracy vs S&P500 |
+| 🎯 **SSI Onboarding** | Direct guidance to **SoSoValue MAG7.ssi** |
 
 ---
 
-## Architecture
+## 🏗 Architecture
 
 ```
-User Input (SSI / Token name)
+User Input (Token / SSI name)
         ↓
-┌─────────────────────────────┐
-│     Data Layer              │
-│  SoSoValue API (9 modules)  │
-│  CoinGecko API              │
-└────────────┬────────────────┘
-             ↓
-┌─────────────────────────────┐
-│     Processing Layer        │
-│  Layer 1: Macro (S&P500)    │
-│  Layer 2: Safety Score      │
-│  Layer 3: Action (AI)       │
-│  Layer 4: Backtest          │
-└────────────┬────────────────┘
-             ↓
-┌─────────────────────────────┐
-│     OpenRouter AI           │
-│  (Claude / GPT)             │
-└────────────┬────────────────┘
-             ↓
-     Result Page Display
+┌─────────────────────────────────────┐
+│          Data Layer                 │
+│  • SoSoValue API (9 modules)        │
+│  • CoinGecko API                    │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│       Processing Layer              │
+│  Layer 1: Macro (S&P500)            │
+│  Layer 2: SBSI Score                │
+│  Layer 3: AI Action                 │
+│  Layer 4: SSI Guidance              │
+└──────────────┬──────────────────────┘
+               ↓
+┌─────────────────────────────────────┐
+│        OpenRouter AI                │
+│     (Claude / GPT)                  │
+└──────────────┬──────────────────────┘
+               ↓
+          Result Page
+               ↓
+    [SoSoValue MAG7.ssi] Button
 ```
 
----
-
-## Tech Stack
-
-- **Frontend**: HTML / CSS / JavaScript (Vanilla)
-- **AI**: OpenRouter API (Claude / GPT)
-- **Data**: SoSoValue API, CoinGecko API
-- **Deployment**: Vercel (auto-deploy via GitHub)
-- **i18n**: EN (Wave 1) / JA (Wave 2) / ZH (Wave 3)
+> **Key Innovation:** Layer 4 (SSI Onboarding) directly converts user fear into SoSoValue revenue through MAG7.ssi guidance.
 
 ---
 
-## Setup
+## 📊 Impact
+
+### Market Size
+- **Target:** 4 million index fund investors in Japan
+- **Potential SSI buyers:** 200,000 (5% conversion rate)
+- **Competitor target:** 50,000 pro traders
+
+### Contribution to SoSoValue
+- **Direct SSI onboarding** driving revenue
+- Opening new retail investor segments
+- Healthier crypto market ecosystem
+
+---
+
+## 🛠 Tech Stack
+
+- **Frontend:** HTML / CSS / JavaScript (Vanilla)
+- **AI:** OpenRouter API (Claude / GPT)
+- **Data:** SoSoValue API (9 modules), CoinGecko API
+- **Deployment:** Vercel (auto-deploy via GitHub)
+- **i18n:** EN (Wave 1) / JA (Wave 2) / ZH (Wave 3)
+
+---
+
+## 🚀 Setup
 
 ### 1. Clone the repository
 
@@ -85,19 +108,15 @@ cd safebridge-ai
 
 ### 2. Configure environment variables
 
-Create a `.env` file in the root directory:
+Create a `.env` file:
 
 ```env
-SOSOVALUE_API_KEY=your_sosovalue_api_key
-COINGECKO_API_KEY=your_coingecko_api_key
-OPENROUTER_API_KEY=your_openrouter_api_key
+SOSOVALUE_API_KEY=your_key
+COINGECKO_API_KEY=your_key
+OPENROUTER_API_KEY=your_key
 ```
 
-> ⚠️ Never commit your `.env` file. It is listed in `.gitignore`.
-
 ### 3. Run locally
-
-No build step required. Open `index.html` directly in your browser, or use a local server:
 
 ```bash
 npx serve .
@@ -105,50 +124,64 @@ npx serve .
 
 ### 4. Deploy
 
-Push to `main` branch → Vercel auto-deploys within 30 seconds.
+Push to `main` → Vercel auto-deploys
 
 ---
 
-## API Usage
+## 🔌 API Usage
 
-| API | Purpose | Module |
-|---|---|---|
-| SoSoValue API | Price, ETF flows, VC backers, SSI index data | Currency, ETF, Fundraising, Index, Feeds |
-| CoinGecko API | S&P500 comparison, historical price data | /coins/{id}/history |
-| OpenRouter API | AI-generated plain-language recommendations | claude-3-haiku / gpt-3.5-turbo |
-
----
-
-## Security
-
-SafeBridge AI is a **read-only** tool.
-
-- ✅ No wallet connection required
-- ✅ No personal data collected or stored
-- ✅ No signing or transactions involved
-- ✅ HTTPS enforced via Vercel
-- ✅ API keys stored server-side only
+| API | Purpose |
+|---|---|
+| **SoSoValue** | Price, ETF flows, VC backers, SSI data |
+| **CoinGecko** | S&P500 comparison, historical prices |
+| **OpenRouter** | AI recommendations |
 
 ---
 
-## Roadmap
+## 🔒 Security
+
+- ✅ Read-only tool
+- ✅ No wallet connection
+- ✅ No personal data stored
+- ✅ HTTPS enforced
+
+---
+
+## 🗓 Roadmap
 
 | Wave | Goals |
 |---|---|
-| Wave 1 (May 1–12) | Core UI, SoSoValue API integration, live demo |
-| Wave 2 (May 18–29) | Full 4-layer analysis, backtest, JA language support |
-| Wave 3 (Jun 4–15) | UX polish, ZH support, final demo video |
+| **Wave 1** | SBSI, SSI onboarding, live demo |
+| **Wave 2** | Backtest, JA language |
+| **Wave 3** | PWA, ZH support |
 
 ---
 
-## Built For
+## 🏆 Why SafeBridge Wins
 
-**SoSoValue × AKINDO Buildathon 2026**
-- Platform: [app.akindo.io](https://app.akindo.io)
-- Powered by: SoSoValue API · CoinGecko · OpenRouter
+| Other Teams | SafeBridge |
+|---|---|
+| Tech & features | **Market size × SoSoValue contribution** |
+| 50K traders | **4M investors** |
+| Indirect SSI | **Direct SSI onboarding** |
 
 ---
 
-## License
+## 📄 License
 
-Apache 2.0 — See [LICENSE](./LICENSE) for details.
+Apache 2.0
+
+---
+
+## 🙏 Built For
+
+**SoSoValue × AKINDO Frontier Hackathon 2026**
+
+---
+
+## 🔗 Links
+
+- [Live Demo](https://safebridge-ai.vercel.app)
+- [SoSoValue](https://sosovalue.com)
+- [MAG7.ssi](https://sosovalue.com/indices/mag7)
+```

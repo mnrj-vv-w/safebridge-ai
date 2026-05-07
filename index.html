@@ -198,6 +198,87 @@
 </head>
 <body>
 
+<script>
+(() => {
+  // 提出期間など一時的に非公開にしたい時だけ true（全公開時は false）
+  const ENABLE_GUARD = true;
+  const PASS = "safebridge";
+
+  if (!ENABLE_GUARD) return;
+
+  try {
+    const qs = new URLSearchParams(location.search);
+    const key = qs.get("key");
+
+    if (localStorage.getItem("sb_ok") === "1") return;
+
+    if (key && key === PASS) {
+      localStorage.setItem("sb_ok", "1");
+      qs.delete("key");
+      const newQs = qs.toString();
+      history.replaceState({}, "", location.pathname + (newQs ? `?${newQs}` : ""));
+      return;
+    }
+
+    document.open();
+    document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Private</title>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background:#F5F7FA; color:#111827; }
+    .wrap { max-width: 520px; margin: 80px auto; padding: 0 18px; }
+    .card { background:#fff; border:1px solid #E8ECF0; border-radius: 16px; padding: 18px; }
+    h2 { font-size: 18px; margin-bottom: 8px; }
+    p { font-size: 13px; color:#6B7280; line-height: 1.7; margin-bottom: 12px; }
+    input { width:100%; padding: 12px 14px; font-size: 15px; border-radius: 12px; border: 1.5px solid #E8ECF0; outline: none; }
+    input:focus { border-color: #185FA5; }
+    button { margin-top: 12px; width:100%; padding: 12px 14px; font-size: 15px; border-radius: 12px; border: none; background:#185FA5; color:#fff; font-weight: 600; cursor:pointer; }
+    button:hover { background:#0C447C; }
+    .err { margin-top: 10px; color:#B91C1C; font-size: 12px; min-height: 16px; }
+    .hint { margin-top: 10px; font-size: 11px; color:#9CA3AF; }
+    code { background:#F3F4F6; padding: 1px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h2>Private</h2>
+      <p>合言葉を入力してください。</p>
+      <input id="p" type="password" autocomplete="current-password" placeholder="Passphrase" />
+      <button id="b">OK</button>
+      <div class="err" id="e"></div>
+      <div class="hint">URLに <code>?key=...</code> を付けても入れます。</div>
+    </div>
+  </div>
+  <script>
+    const PASS = ${JSON.stringify(PASS)};
+    const p = document.getElementById('p');
+    const e = document.getElementById('e');
+    const b = document.getElementById('b');
+    p.focus();
+    function submit() {
+      if (p.value === PASS) {
+        localStorage.setItem('sb_ok', '1');
+        location.reload();
+      } else {
+        e.textContent = '違います';
+      }
+    }
+    b.addEventListener('click', submit);
+    p.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') submit(); });
+  <\/script>
+</body>
+</html>`);
+    document.close();
+  } catch {
+    // If storage is disabled, fail open to avoid blocking reviewers.
+  }
+})();
+</script>
+
 <nav>
   <span class="logo">SafeBridge AI</span>
   <span class="nav-sub">Crypto Risk Assessment</span>

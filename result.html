@@ -214,6 +214,11 @@
       grid-template-columns: 1fr 1fr;
       gap: 10px;
       margin-bottom: 12px;
+      overflow: visible;
+    }
+    .detail-grid.detail-grid--etf-pop {
+      position: relative;
+      z-index: 40;
     }
     .detail-card {
       background: #fff;
@@ -229,6 +234,61 @@
       color: #9CA3AF;
       margin-top: 8px;
       line-height: 1.55;
+    }
+    .detail-lede {
+      font-size: 11px;
+      color: #9CA3AF;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .detail-card--etf {
+      position: relative;
+      overflow: visible;
+      z-index: 1;
+    }
+    .detail-card--etf.is-popopen {
+      z-index: 30;
+    }
+    .etf-info-btn {
+      margin-top: 8px;
+      padding: 4px 0;
+      font-size: 11px;
+      font-weight: 500;
+      color: #185FA5;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font-family: inherit;
+    }
+    .etf-info-btn:hover,
+    .etf-info-btn:focus-visible {
+      color: #0C447C;
+      outline: none;
+    }
+    .etf-info-btn:focus-visible {
+      box-shadow: 0 0 0 2px #fff, 0 0 0 4px #185FA5;
+      border-radius: 4px;
+    }
+    .etf-popover {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      top: calc(100% - 4px);
+      margin-top: 0;
+      z-index: 50;
+      padding: 12px 14px;
+      background: #fff;
+      border: 1px solid #E8ECF0;
+      border-radius: 12px;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+      font-size: 11px;
+      color: #4B5563;
+      line-height: 1.55;
+    }
+    .etf-popover[hidden] {
+      display: none !important;
     }
     .detail-source { font-size: 10px; color: #D1D5DB; margin-top: 8px; }
 
@@ -601,7 +661,7 @@
 
   <!-- DETAIL ANALYSIS -->
   <p class="section-label">Detailed Analysis</p>
-  <div class="detail-grid">
+  <div class="detail-grid" id="detail-analysis-grid">
     <div class="detail-card">
       <div class="detail-title">Annualized Volatility</div>
       <div class="detail-val" id="d-vol">—</div>
@@ -620,13 +680,20 @@
       <div class="detail-sub">Worst peak-to-trough</div>
       <div class="detail-source">CoinGecko market_chart</div>
     </div>
-    <div class="detail-card">
+    <div class="detail-card detail-card--etf" id="d-etf-card">
       <div class="detail-title">Institutional Activity</div>
       <div class="detail-val" id="d-etf">—</div>
       <div class="detail-sub" id="d-etf-sub">ETF flow proxy</div>
-      <div class="detail-note" id="d-etf-note">
-        For MAG7.ssi we show US-listed ETF aggregate flows for the basket’s anchor symbol (from SoSoValue).
-        This is market context—not cash flows for MAG7.ssi itself.
+      <p class="detail-lede" id="d-etf-lede">
+        US-listed ETF aggregate for the basket anchor — not MAG7.ssi flows.
+      </p>
+      <button type="button" class="etf-info-btn" id="d-etf-info-btn"
+        aria-expanded="false" aria-controls="d-etf-popover">
+        What’s this?
+      </button>
+      <div class="etf-popover" id="d-etf-popover" role="region"
+        aria-label="Institutional Activity explanation" hidden>
+        <span id="d-etf-popover-text"></span>
       </div>
       <div class="detail-source">SoSoValue</div>
     </div>
@@ -791,6 +858,7 @@ const state = {
   loadBias();
   await runDiagnosis();
   renderAll();
+  bindEtfPopoverHandlers();
   fetchAi();
 })();
 
@@ -1213,6 +1281,58 @@ function extractLatestDailyNetInflow(data) {
   };
 }
 
+function closeEtfPopover() {
+  const pop = document.getElementById('d-etf-popover');
+  const btn = document.getElementById('d-etf-info-btn');
+  const card = document.getElementById('d-etf-card');
+  const grid = document.getElementById('detail-analysis-grid');
+  if (pop) pop.setAttribute('hidden', '');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+  if (card) card.classList.remove('is-popopen');
+  if (grid) grid.classList.remove('detail-grid--etf-pop');
+}
+
+/** Close popover whenever ETF copy refreshes (avoid stale text while open). */
+function setEtfExplainControls() {
+  closeEtfPopover();
+}
+
+let etfPopoverHandlersBound = false;
+function bindEtfPopoverHandlers() {
+  if (etfPopoverHandlersBound) return;
+  etfPopoverHandlersBound = true;
+  const btn = document.getElementById('d-etf-info-btn');
+  const pop = document.getElementById('d-etf-popover');
+  const card = document.getElementById('d-etf-card');
+  if (!btn || !pop || !card) return;
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const opening = pop.hasAttribute('hidden');
+    if (opening) {
+      pop.removeAttribute('hidden');
+      btn.setAttribute('aria-expanded', 'true');
+      card.classList.add('is-popopen');
+      document.getElementById('detail-analysis-grid')?.classList.add('detail-grid--etf-pop');
+    } else {
+      closeEtfPopover();
+    }
+  });
+
+  pop.addEventListener('click', (e) => e.stopPropagation());
+
+  document.addEventListener('click', () => {
+    if (!pop.hasAttribute('hidden')) closeEtfPopover();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !pop.hasAttribute('hidden')) {
+      closeEtfPopover();
+      btn.focus();
+    }
+  });
+}
+
 // ---------- RENDER ----------
 function renderAll() {
   document.getElementById('loading').classList.add('hidden');
@@ -1310,21 +1430,30 @@ function renderAll() {
     const sess = state.etfFlow.sessionDate ? ` · ${state.etfFlow.sessionDate}` : '';
     document.getElementById('d-etf-sub').textContent =
       `${sym}/US ETFs · latest total_net_inflow ${amt}${sess}`;
-    document.getElementById('d-etf-note').textContent =
-      `SoSoValue aggregates all US-listed ETFs linked to ${sym} for the latest session above. ` +
+    document.getElementById('d-etf-lede').textContent =
+      `${sym}/US-listed ETF aggregate for the latest session — not MAG7.ssi basket flows.`;
+    document.getElementById('d-etf-popover-text').textContent =
+      `SoSoValue aggregates all US-listed ETFs linked to ${sym} for the latest session shown above. ` +
       'That reading is a macro liquidity cue—it does not measure MAG7.ssi subscriptions or on-chain flows.';
+    setEtfExplainControls();
   } else if (state.ticker.toUpperCase() === 'MAG7.SSI') {
     document.getElementById('d-etf').textContent = 'Live unavailable';
     document.getElementById('d-etf').style.color = '#9CA3AF';
     document.getElementById('d-etf-sub').textContent = 'SoSoValue ETF endpoint did not respond';
-    document.getElementById('d-etf-note').textContent =
-      'When live, this tile summarizes US ETF net flows for the basket anchor (BTC for MAG7) via SoSoValue summary-history.';
+    document.getElementById('d-etf-lede').textContent =
+      'Spot ETF flow proxy for MAG7’s anchor symbol when the feed responds.';
+    document.getElementById('d-etf-popover-text').textContent =
+      'When live, this tile summarizes US ETF net flows for the basket anchor (BTC for MAG7) via SoSoValue etfs/summary-history.';
+    setEtfExplainControls();
   } else {
     document.getElementById('d-etf').textContent = 'N/A';
     document.getElementById('d-etf').style.color = '#9CA3AF';
     document.getElementById('d-etf-sub').textContent = 'Only tracked for MAG7.ssi';
-    document.getElementById('d-etf-note').textContent =
-      'Institutional ETF proxy is enabled only on the MAG7.ssi diagnosis path today.';
+    document.getElementById('d-etf-lede').textContent =
+      'Institutional ETF context is enabled only on the MAG7.ssi path.';
+    document.getElementById('d-etf-popover-text').textContent =
+      'We currently attach the US ETF aggregate signal only when you diagnose MAG7.ssi.';
+    setEtfExplainControls();
   }
 
   // Layer scorecard (L2-L4)

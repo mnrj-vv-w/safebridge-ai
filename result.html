@@ -477,6 +477,58 @@
     .soso-sym { font-weight: 600; text-transform: uppercase; color: #374151; }
     .soso-w { color: #6B7280; font-variant-numeric: tabular-nums; }
     .soso-muted { font-size: 12px; color: #9CA3AF; line-height: 1.5; margin-top: 8px; }
+    .soso-row--wrap {
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+    .soso-label-cluster {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+      flex: 1;
+      min-width: 0;
+    }
+    .soso-help-btn {
+      padding: 0;
+      margin: 0;
+      border: none;
+      background: none;
+      font-size: 10px;
+      font-weight: 500;
+      color: #185FA5;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      font-family: inherit;
+    }
+    .soso-help-btn:hover,
+    .soso-help-btn:focus-visible {
+      color: #0C447C;
+      outline: none;
+    }
+    .soso-help-btn:focus-visible {
+      box-shadow: 0 0 0 2px #fff, 0 0 0 4px #185FA5;
+      border-radius: 4px;
+    }
+    .soso-help-inline {
+      width: 100%;
+      flex-basis: 100%;
+      margin-top: 6px;
+      padding: 10px 12px;
+      font-size: 11px;
+      color: #4B5563;
+      line-height: 1.55;
+      background: #F9FAFB;
+      border: 1px solid #E8ECF0;
+      border-radius: 10px;
+    }
+    .soso-help-inline[hidden] {
+      display: none !important;
+    }
+    .page-help-card {
+      margin-bottom: 12px;
+    }
   </style>
 </head>
 <body>
@@ -569,6 +621,28 @@
     <span class="live-pill" id="live-pill"><span class="dot"></span><span id="live-pill-text">Live data</span></span>
   </div>
 
+  <div class="transparency-card page-help-card">
+    <button type="button" class="trans-toggle" id="page-help-toggle" onclick="togglePageHelp()" aria-expanded="false" aria-controls="page-help-body">
+      <span>How to read this page</span>
+      <span class="trans-arrow">▾</span>
+    </button>
+    <div class="trans-body" id="page-help-body">
+      <p style="margin-bottom:10px;">
+        SafeBridge compares your asset to the S&amp;P500 using <strong>live volatility</strong> (CoinGecko)
+        and layers in optional <strong>SoSoValue</strong> signals when you pick an SSI (SoSoValue Index).
+      </p>
+      <ul style="margin:0;padding-left:18px;line-height:1.65;">
+        <li><strong>Risk score</strong> — driven mainly by recent volatility vs a ~13.5% S&amp;P500 baseline, plus your quiz bias if you took it.</li>
+        <li><strong>SBSI</strong> — a simplified “index-investor comfort” score; small nudges from ETF flows (MAG7 path) and short-term index momentum when available.</li>
+        <li><strong>SoSoValue card</strong> — official index id/price/24h move from SoSoValue; news counts filtered by the basket’s top weight; Attention is our lightweight engagement read from those headlines.</li>
+        <li><strong>Institutional Activity</strong> — US-listed ETF aggregate for the anchor symbol (e.g. BTC); not cash flows for the SSI basket itself—tap “What’s this?” there.</li>
+      </ul>
+      <p style="margin-top:10px;margin-bottom:0;">
+        Open <strong>Diagnosis Transparency</strong> at the bottom for formulas and API status.
+      </p>
+    </div>
+  </div>
+
   <!-- 7-TIER SIGNAL -->
   <p class="section-label">Overall Risk Signal (7-tier)</p>
   <div class="card">
@@ -637,21 +711,53 @@
       <span class="soso-index-title">SSI intelligence</span>
       <span class="soso-index-meta" id="soso-resolve-meta">—</span>
     </div>
-    <div class="soso-row">
-      <span class="soso-k">Index price (SoSoValue)</span>
+    <div class="soso-row soso-row--wrap">
+      <div class="soso-label-cluster">
+        <span class="soso-k">Index price (SoSoValue)</span>
+        <button type="button" class="soso-help-btn" data-soso-help="price"
+          aria-expanded="false" aria-controls="soso-help-pop-price">What’s this?</button>
+      </div>
       <span class="soso-v" id="soso-price">—</span>
+      <div class="soso-help-inline" id="soso-help-pop-price" role="region" aria-label="Index price explanation" hidden>
+        SoSoValue’s index market snapshot <strong>price</strong> for the resolved API id (e.g. ssiMAG7).
+        It is their quoted index level in USD—separate from the CoinGecko proxy we use for volatility math above.
+      </div>
     </div>
-    <div class="soso-row">
-      <span class="soso-k">24h momentum</span>
+    <div class="soso-row soso-row--wrap">
+      <div class="soso-label-cluster">
+        <span class="soso-k">24h momentum</span>
+        <button type="button" class="soso-help-btn" data-soso-help="momo"
+          aria-expanded="false" aria-controls="soso-help-pop-momo">What’s this?</button>
+      </div>
       <span class="soso-v" id="soso-momo">—</span>
+      <div class="soso-help-inline" id="soso-help-pop-momo" role="region" aria-label="24h momentum explanation" hidden>
+        Pulled from the same snapshot (fields such as <strong>24h_change_pct</strong>). We show percent move plus a tiny label
+        (Risk-on / Neutral / Risk-off)—these are <strong>SafeBridge heuristics</strong> for skimming, not trading advice.
+      </div>
     </div>
-    <div class="soso-row">
-      <span class="soso-k">News matches (feed total)</span>
+    <div class="soso-row soso-row--wrap">
+      <div class="soso-label-cluster">
+        <span class="soso-k">News matches (feed total)</span>
+        <button type="button" class="soso-help-btn" data-soso-help="news"
+          aria-expanded="false" aria-controls="soso-help-pop-news">What’s this?</button>
+      </div>
       <span class="soso-v" id="soso-news-total">—</span>
+      <div class="soso-help-inline" id="soso-help-pop-news" role="region" aria-label="News matches explanation" hidden>
+        Count from SoSoValue’s <strong>/news</strong> feed when filtered by the <strong>largest basket constituent’s currency_id</strong>.
+        The “filter BITCOIN” tag tells you which leg drove that query—it’s broader narrative volume, not MAG7-specific subscriptions.
+      </div>
     </div>
-    <div class="soso-row">
-      <span class="soso-k">Attention index</span>
+    <div class="soso-row soso-row--wrap">
+      <div class="soso-label-cluster">
+        <span class="soso-k">Attention index</span>
+        <button type="button" class="soso-help-btn" data-soso-help="attention"
+          aria-expanded="false" aria-controls="soso-help-pop-attention">What’s this?</button>
+      </div>
       <span class="soso-v" id="soso-attention">—</span>
+      <div class="soso-help-inline" id="soso-help-pop-attention" role="region" aria-label="Attention index explanation" hidden>
+        A <strong>SafeBridge 0–100 proxy</strong> computed from likes vs impressions on the returned news rows.
+        It captures headline engagement, not a SoSoValue official sentiment score.
+      </div>
     </div>
     <div class="soso-const-list" id="soso-const-list"></div>
     <p class="soso-muted" id="soso-footnote">
@@ -859,6 +965,7 @@ const state = {
   await runDiagnosis();
   renderAll();
   bindEtfPopoverHandlers();
+  bindSosoHelpHandlers();
   fetchAi();
 })();
 
@@ -1295,6 +1402,7 @@ function closeEtfPopover() {
 /** Close popover whenever ETF copy refreshes (avoid stale text while open). */
 function setEtfExplainControls() {
   closeEtfPopover();
+  closeAllSosoHelp();
 }
 
 let etfPopoverHandlersBound = false;
@@ -1322,11 +1430,14 @@ function bindEtfPopoverHandlers() {
   pop.addEventListener('click', (e) => e.stopPropagation());
 
   document.addEventListener('click', () => {
+    closeAllSosoHelp();
     if (!pop.hasAttribute('hidden')) closeEtfPopover();
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !pop.hasAttribute('hidden')) {
+    if (e.key !== 'Escape') return;
+    closeAllSosoHelp();
+    if (!pop.hasAttribute('hidden')) {
       closeEtfPopover();
       btn.focus();
     }
@@ -1652,6 +1763,49 @@ function toggleTrans() {
   const body = document.getElementById('trans-body');
   btn.classList.toggle('open');
   body.classList.toggle('open');
+}
+
+function togglePageHelp() {
+  const btn = document.getElementById('page-help-toggle');
+  const body = document.getElementById('page-help-body');
+  if (!btn || !body) return;
+  const open = !btn.classList.contains('open');
+  btn.classList.toggle('open', open);
+  body.classList.toggle('open', open);
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function closeAllSosoHelp() {
+  document.querySelectorAll('.soso-help-inline').forEach((el) => el.setAttribute('hidden', ''));
+  document.querySelectorAll('.soso-help-btn').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+}
+
+let sosoHelpHandlersBound = false;
+function bindSosoHelpHandlers() {
+  if (sosoHelpHandlersBound) return;
+  sosoHelpHandlersBound = true;
+  const card = document.getElementById('soso-index-card');
+  if (!card) return;
+
+  document.querySelectorAll('.soso-help-inline').forEach((panel) => {
+    panel.addEventListener('click', (e) => e.stopPropagation());
+  });
+
+  card.addEventListener('click', (e) => {
+    const btn = e.target.closest('.soso-help-btn');
+    if (!btn || !card.contains(btn)) return;
+    e.stopPropagation();
+    const panelId = btn.getAttribute('aria-controls');
+    const panel = panelId ? document.getElementById(panelId) : null;
+    if (!panel) return;
+    const willOpen = panel.hasAttribute('hidden');
+    closeAllSosoHelp();
+    closeEtfPopover();
+    if (willOpen) {
+      panel.removeAttribute('hidden');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+  });
 }
 
 // ---------- AI RECOMMENDATION ----------

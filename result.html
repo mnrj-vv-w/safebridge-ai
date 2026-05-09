@@ -848,15 +848,58 @@ function resolveSsiIndexTicker(displayTicker, listRaw) {
   return null;
 }
 
-function snapshotSentimentFromApi(snap) {
+function coerceFiniteNumber(v) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  if (typeof v === 'string') {
+    const t = v.trim().replace(/%$/, '').replace(/,/g, '');
+    const n = Number(t);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+/** SoSoValue may return 24h move as a fraction (-0.0016 ≈ -0.16%) or already as percent (-0.16). */
+function pick24hChangeDisplayPct(snap) {
   if (!snap || typeof snap !== 'object') return null;
-  const ch = snap['24h_change_pct'];
-  if (typeof ch !== 'number') return null;
-  const pct = ch * 100;
+  const keys = [
+    '24h_change_pct',
+    'change_24h_pct',
+    'change24h_pct',
+    'day_change_pct',
+    'price_change_pct_24h',
+    'pct_change_24h',
+    'change_pct_24h'
+  ];
+  for (const k of keys) {
+    if (!(k in snap)) continue;
+    const n = coerceFiniteNumber(snap[k]);
+    if (n == null) continue;
+    const asPct = Math.abs(n) <= 1 ? n * 100 : n;
+    return asPct;
+  }
+  return null;
+}
+
+function snapshotSentimentFromApi(snap) {
+  const pct = pick24hChangeDisplayPct(snap);
+  if (pct == null || !Number.isFinite(pct)) return null;
   let label = 'Neutral';
   if (pct > 0.15) label = 'Risk-on tilt';
   else if (pct < -0.15) label = 'Risk-off tilt';
   return { label, pct24h: pct, raw: snap };
+}
+
+function normalizeNewsFeedPayload(raw) {
+  if (!raw || typeof raw !== 'object') return { total: null, list: [] };
+  let bucket = raw;
+  if (bucket.list == null && bucket.total == null && bucket.data && typeof bucket.data === 'object') {
+    bucket = bucket.data;
+  }
+  const list = Array.isArray(bucket.list) ? bucket.list : [];
+  let total = coerceFiniteNumber(bucket.total);
+  if (total == null && bucket.total_count != null) total = coerceFiniteNumber(bucket.total_count);
+  return { total, list };
 }
 
 function attentionFromNewsList(list) {
@@ -983,8 +1026,8 @@ async function runDiagnosis() {
         state.liveCount++;
         state.indexSnapshot = snapRes.data;
         state.snapshotSentiment = snapshotSentimentFromApi(snapRes.data);
-        const px = snapRes.data.price;
-        if (typeof px === 'number') {
+        const px = coerceFiniteNumber(snapRes.data.price);
+        if (px != null) {
           state.priceSource = `CoinGecko vol proxy · SoSoValue index $${px.toFixed(2)}`;
         }
       } else {
@@ -993,10 +1036,10 @@ async function runDiagnosis() {
 
       if (newsRes.ok && newsRes.data && typeof newsRes.data === 'object') {
         state.liveCount++;
-        const total = newsRes.data.total;
-        const list = newsRes.data.list;
-        if (typeof total === 'number') state.newsTotal = total;
-        state.newsAttention = attentionFromNewsList(Array.isArray(list) ? list : []);
+        const { total: newsTotalRaw, list: newsList } = normalizeNewsFeedPayload(newsRes.data);
+        if (newsTotalRaw != null) state.newsTotal = Math.round(newsTotalRaw);
+        else if (newsList.length) state.newsTotal = newsList.length;
+        state.newsAttention = attentionFromNewsList(newsList);
       } else {
         state.errors.push('SoSoValue news feed unavailable');
       }
@@ -1245,8 +1288,9 @@ function renderSosoIndexCard() {
 
   const snap = state.indexSnapshot;
   priceEl.style.color = '#1A1A2E';
-  if (snap && typeof snap.price === 'number') {
-    priceEl.textContent = `$${Number(snap.price).toFixed(2)}`;
+  const pxDisp = snap ? coerceFiniteNumber(snap.price) : null;
+  if (pxDisp != null) {
+    priceEl.textContent = `$${pxDisp.toFixed(2)}`;
   } else {
     priceEl.textContent = '—';
     priceEl.style.color = '#9CA3AF';

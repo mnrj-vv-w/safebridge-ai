@@ -224,7 +224,13 @@
     .detail-title { font-size: 12px; color: #9CA3AF; margin-bottom: 6px; }
     .detail-val { font-size: 15px; font-weight: 600; }
     .detail-sub { font-size: 11px; color: #9CA3AF; margin-top: 3px; }
-    .detail-source { font-size: 10px; color: #D1D5DB; margin-top: 6px; }
+    .detail-note {
+      font-size: 10px;
+      color: #9CA3AF;
+      margin-top: 8px;
+      line-height: 1.55;
+    }
+    .detail-source { font-size: 10px; color: #D1D5DB; margin-top: 8px; }
 
     /* LAYER SCORECARD */
     .layer-grid {
@@ -618,6 +624,10 @@
       <div class="detail-title">Institutional Activity</div>
       <div class="detail-val" id="d-etf">—</div>
       <div class="detail-sub" id="d-etf-sub">ETF flow proxy</div>
+      <div class="detail-note" id="d-etf-note">
+        For MAG7.ssi we show US-listed ETF aggregate flows for the basket’s anchor symbol (from SoSoValue).
+        This is market context—not cash flows for MAG7.ssi itself.
+      </div>
       <div class="detail-source">SoSoValue</div>
     </div>
   </div>
@@ -674,9 +684,11 @@
       <div class="trans-row"><span class="trans-key">Bias adjustment</span><span class="trans-val" id="t-bias">+0</span></div>
       <div class="trans-row"><span class="trans-key">Data fetched at</span><span class="trans-val" id="t-fetched">—</span></div>
       <div class="trans-row"><span class="trans-key">API status</span><span class="trans-val" id="t-status">—</span></div>
+      <div class="trans-row"><span class="trans-key">ETF flow (MAG7)</span><span class="trans-val" id="t-etf-expl">—</span></div>
       <div style="margin-top:10px;line-height:1.6;">
         Score = base(volatility multiple) + bias adjustment, clamped 0–100.<br>
-        SBSI ≈ 100 − Risk + flow bonus, clamped 0–100.
+        SBSI ≈ 100 − Risk + flow bonus, clamped 0–100.<br>
+        Flow bonus uses latest-day <code style="font-size:11px;background:#F3F4F6;padding:1px 4px;border-radius:4px;">total_net_inflow</code> for US ETFs tied to the anchor symbol (e.g. BTC).
       </div>
     </div>
   </div>
@@ -1298,14 +1310,21 @@ function renderAll() {
     const sess = state.etfFlow.sessionDate ? ` · ${state.etfFlow.sessionDate}` : '';
     document.getElementById('d-etf-sub').textContent =
       `${sym}/US ETFs · latest total_net_inflow ${amt}${sess}`;
+    document.getElementById('d-etf-note').textContent =
+      `SoSoValue aggregates all US-listed ETFs linked to ${sym} for the latest session above. ` +
+      'That reading is a macro liquidity cue—it does not measure MAG7.ssi subscriptions or on-chain flows.';
   } else if (state.ticker.toUpperCase() === 'MAG7.SSI') {
     document.getElementById('d-etf').textContent = 'Live unavailable';
     document.getElementById('d-etf').style.color = '#9CA3AF';
     document.getElementById('d-etf-sub').textContent = 'SoSoValue ETF endpoint did not respond';
+    document.getElementById('d-etf-note').textContent =
+      'When live, this tile summarizes US ETF net flows for the basket anchor (BTC for MAG7) via SoSoValue summary-history.';
   } else {
     document.getElementById('d-etf').textContent = 'N/A';
     document.getElementById('d-etf').style.color = '#9CA3AF';
-    document.getElementById('d-etf-sub').textContent = 'Only tracked for SSI baskets';
+    document.getElementById('d-etf-sub').textContent = 'Only tracked for MAG7.ssi';
+    document.getElementById('d-etf-note').textContent =
+      'Institutional ETF proxy is enabled only on the MAG7.ssi diagnosis path today.';
   }
 
   // Layer scorecard (L2-L4)
@@ -1322,6 +1341,16 @@ function renderAll() {
   document.getElementById('t-status').textContent = state.errors.length
     ? `${state.liveCount}/${state.totalCount} live · ${state.errors.length} fallback`
     : `${state.liveCount}/${state.totalCount} live · all good`;
+
+  const etfExpl = document.getElementById('t-etf-expl');
+  if (state.ticker.toUpperCase() === 'MAG7.SSI') {
+    const sym = state.etfFlowSymbol || 'BTC';
+    etfExpl.textContent = state.etfFlow
+      ? `${sym}/US · latest session total_net_inflow (see card)—not MAG7.ssi flows`
+      : 'Uses etfs/summary-history when available; anchor follows largest basket weight.';
+  } else {
+    etfExpl.textContent = 'N/A on this ticker';
+  }
 }
 
 function renderSosoIndexCard() {

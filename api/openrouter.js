@@ -4,7 +4,7 @@
  *
  * Usage:
  *   POST /api/openrouter
- *   Body: { ticker, riskScore, etfFlow, safetyScore, volatilityMultiple, signal }
+ *   Body: { ticker, riskScore, etfFlow, safetyScore, volatilityMultiple, signal, indexMomentum?, newsFeedTotal?, newsAttention? }
  */
 
 export default async function handler(req, res) {
@@ -33,6 +33,9 @@ export default async function handler(req, res) {
     safetyScore = 72,
     volatilityMultiple = 2.1,
     signal = 'neutral',
+    indexMomentum = 'N/A',
+    newsFeedTotal = 'N/A',
+    newsAttention = 'N/A',
   } = req.body || {};
 
   // Build prompt for AI
@@ -42,6 +45,9 @@ Based on this data for ${ticker}:
 - Risk Score: ${riskScore}/100
 - S&P500 Volatility Multiple: ${volatilityMultiple}x (if S&P500 drops -5%, this could drop -${(5 * volatilityMultiple).toFixed(0)}% to -${(5 * volatilityMultiple * 1.5).toFixed(0)}%)
 - Institutional ETF Flow this week: ${etfFlow}
+- Index momentum (SoSoValue snapshot): ${indexMomentum}
+- Related news volume (SoSoValue feed total): ${newsFeedTotal}
+- News attention index (0-100): ${newsAttention}
 - Project Safety Score: ${safetyScore}/100
 - Overall Signal: ${signal}
 

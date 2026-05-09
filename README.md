@@ -50,7 +50,7 @@ User Input (Token / SSI name) + optional bias quiz
 ┌─────────────────────────────────────┐
 │          Data Layer                 │
 │  • CoinGecko: 90d prices (vol, DD)  │
-│  • SoSoValue: ETF list (MAG7.ssi)   │
+│  • SoSoValue: indices, constituents, snapshot, news (+ ETFs on MAG7) │
 └──────────────┬──────────────────────┘
                ↓
 ┌─────────────────────────────────────┐
@@ -92,7 +92,7 @@ User Input (Token / SSI name) + optional bias quiz
 
 - **Frontend:** HTML / CSS / JavaScript (Vanilla)
 - **AI:** OpenRouter API (default: GPT; other models configurable in `api/openrouter.js`)
-- **Data:** SoSoValue API (Wave 1: ETF-related endpoint for institutional flow hint on MAG7.ssi), CoinGecko API (`market_chart` for volatility and drawdown)
+- **Data:** SoSoValue Open API (`indices`, `indices/{id}/constituents`, `indices/{id}/market-snapshot`, `news`; plus `etfs` on MAG7.ssi). CoinGecko (`market_chart` for volatility and drawdown).
 - **Deployment:** Vercel (auto-deploy via GitHub)
 - **i18n:** EN (Wave 1) / JA (Wave 2) / ZH (Wave 3)
 
@@ -140,7 +140,7 @@ Push to `main` → Vercel auto-deploys
 
 | API | Endpoints Used (Wave 1) | Purpose |
 |---|---|---|
-| **SoSoValue** | `GET .../v1/etf/list` (via `/api/sosovalue?endpoint=etf/list`) | Institutional flow hint for MAG7.ssi diagnosis path |
+| **SoSoValue** | `openapi/v1`: `indices`, `indices/{ticker}/constituents`, `indices/{ticker}/market-snapshot`, `news`, `etfs` (proxied via `/api/sosovalue?endpoint=…`) | SSI composition, price/momentum, news volume & attention proxy; ETF tape hint for MAG7 |
 | **CoinGecko** | `coins/{id}/market_chart` | 90-day volatility, 30d return, max drawdown vs S&P500 vol baseline |
 | **OpenRouter** | Chat completions (`openai/gpt-3.5-turbo` in code) | Plain-language recommendation text |
 

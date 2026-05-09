@@ -385,6 +385,32 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-text { font-size: 13px; color: #6B7280; }
     .loading-overlay.hidden { display: none; }
+
+    /* SOSO INDEX */
+    .soso-index-card { margin-bottom: 12px; }
+    .soso-index-head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 10px; margin-bottom: 10px;
+    }
+    .soso-index-title { font-size: 13px; font-weight: 600; color: #185FA5; }
+    .soso-index-meta { font-size: 11px; color: #9CA3AF; text-align: right; }
+    .soso-row {
+      display: flex; justify-content: space-between; gap: 12px;
+      padding: 8px 0; border-bottom: 1px dashed #F3F4F6;
+      font-size: 13px;
+    }
+    .soso-row:last-child { border-bottom: none; }
+    .soso-k { color: #6B7280; flex-shrink: 0; }
+    .soso-v { font-weight: 600; color: #1A1A2E; text-align: right; }
+    .soso-const-list { margin-top: 10px; }
+    .soso-const-item {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; padding: 6px 0; border-bottom: 1px solid #F3F4F6;
+    }
+    .soso-const-item:last-child { border-bottom: none; }
+    .soso-sym { font-weight: 600; text-transform: uppercase; color: #374151; }
+    .soso-w { color: #6B7280; font-variant-numeric: tabular-nums; }
+    .soso-muted { font-size: 12px; color: #9CA3AF; line-height: 1.5; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -538,6 +564,35 @@
     <div class="powered">Powered by SoSoValue API · CoinGecko</div>
   </div>
 
+  <!-- SOSOVALUE INDEX + NEWS -->
+  <p class="section-label">SoSoValue · Live Index &amp; News</p>
+  <div class="card soso-index-card" id="soso-index-card">
+    <div class="soso-index-head">
+      <span class="soso-index-title">SSI intelligence</span>
+      <span class="soso-index-meta" id="soso-resolve-meta">—</span>
+    </div>
+    <div class="soso-row">
+      <span class="soso-k">Index price (SoSoValue)</span>
+      <span class="soso-v" id="soso-price">—</span>
+    </div>
+    <div class="soso-row">
+      <span class="soso-k">24h momentum</span>
+      <span class="soso-v" id="soso-momo">—</span>
+    </div>
+    <div class="soso-row">
+      <span class="soso-k">News matches (feed total)</span>
+      <span class="soso-v" id="soso-news-total">—</span>
+    </div>
+    <div class="soso-row">
+      <span class="soso-k">Attention index</span>
+      <span class="soso-v" id="soso-attention">—</span>
+    </div>
+    <div class="soso-const-list" id="soso-const-list"></div>
+    <p class="soso-muted" id="soso-footnote">
+      Constituents, snapshot, and news are fetched from SoSoValue Open API (indices + news endpoints).
+    </p>
+  </div>
+
   <!-- DETAIL ANALYSIS -->
   <p class="section-label">Detailed Analysis</p>
   <div class="detail-grid">
@@ -612,6 +667,7 @@
     </button>
     <div class="trans-body" id="trans-body">
       <div class="trans-row"><span class="trans-key">Ticker</span><span class="trans-val" id="t-ticker">—</span></div>
+      <div class="trans-row"><span class="trans-key">SoSoValue index id</span><span class="trans-val" id="t-soso-index">—</span></div>
       <div class="trans-row"><span class="trans-key">Price source</span><span class="trans-val" id="t-price-src">—</span></div>
       <div class="trans-row"><span class="trans-key">Volatility window</span><span class="trans-val" id="t-window">90 days, daily close</span></div>
       <div class="trans-row"><span class="trans-key">S&amp;P500 baseline</span><span class="trans-val">~13.5% annualized vol</span></div>
@@ -699,7 +755,14 @@ const state = {
   ret30: null,
   drawdown: null,
   etfFlow: null,
-  priceSource: '—'
+  priceSource: '—',
+  ssiIndexTicker: null,
+  constituents: null,
+  indexSnapshot: null,
+  snapshotSentiment: null,
+  newsTotal: null,
+  newsAttention: null,
+  newsCurrencyLabel: null
 };
 
 // ---------- ENTRY ----------
@@ -729,11 +792,103 @@ function loadBias() {
   } catch {}
 }
 
+function unwrapSosoPayload(body) {
+  if (body && typeof body === 'object' && typeof body.code === 'number' && 'data' in body) {
+    return body.data;
+  }
+  return body;
+}
+
+function normalizeIndicesList(data) {
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.list)) return data.list;
+  return [];
+}
+
+function normalizeConstituentsPayload(data) {
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.list)) return data.list;
+  return [];
+}
+
+async function fetchSoso(endpointPath, query = {}) {
+  const params = new URLSearchParams({ endpoint: endpointPath });
+  for (const [k, v] of Object.entries(query)) {
+    if (v !== undefined && v !== null && v !== '') params.append(k, String(v));
+  }
+  const raw = await safeFetchJson(`/api/sosovalue?${params.toString()}`);
+  if (!raw.ok) return { ok: false, error: raw.error || raw.status };
+  const body = raw.data;
+  if (body && typeof body.code === 'number' && body.code !== 0) {
+    return { ok: false, error: body.message || `SoSoValue code ${body.code}` };
+  }
+  return { ok: true, data: unwrapSosoPayload(body) };
+}
+
+function resolveSsiIndexTicker(displayTicker, listRaw) {
+  const arr = Array.isArray(listRaw) ? listRaw : [];
+  if (!arr.length) return null;
+  const u = displayTicker.toUpperCase().replace(/\.SSI$/i, '');
+  const needle = u.toLowerCase();
+  const aliases = {
+    MAG7: ['ssimag7', 'mag7'],
+    MEME: ['ssimeme', 'meme'],
+    DEFI: ['ssidefi', 'defi']
+  };
+  const hints = aliases[u] || [needle];
+  for (const id of arr) {
+    const L = String(id).toLowerCase();
+    for (const h of hints) {
+      if (L === h || L.includes(h)) return id;
+    }
+  }
+  for (const id of arr) {
+    if (String(id).toLowerCase().includes(needle)) return id;
+  }
+  return null;
+}
+
+function snapshotSentimentFromApi(snap) {
+  if (!snap || typeof snap !== 'object') return null;
+  const ch = snap['24h_change_pct'];
+  if (typeof ch !== 'number') return null;
+  const pct = ch * 100;
+  let label = 'Neutral';
+  if (pct > 0.15) label = 'Risk-on tilt';
+  else if (pct < -0.15) label = 'Risk-off tilt';
+  return { label, pct24h: pct, raw: snap };
+}
+
+function attentionFromNewsList(list) {
+  if (!Array.isArray(list) || !list.length) return null;
+  let sum = 0;
+  let n = 0;
+  for (const item of list) {
+    const imp = Number(item.impression_count) || 0;
+    const likes = Number(item.like_count) || 0;
+    if (imp <= 0 && likes <= 0) continue;
+    const r = imp > 0 ? likes / Math.sqrt(imp + 1) : likes / 10;
+    sum += Math.min(1, r);
+    n++;
+  }
+  if (!n) return null;
+  return Math.round((sum / n) * 100);
+}
+
 // ---------- DIAGNOSIS PIPELINE ----------
 async function runDiagnosis() {
   const tickerUpper = state.ticker.toUpperCase();
   const isSSI = tickerUpper.endsWith('.SSI');
   const proxy = SSI_PROXY[tickerUpper];
+
+  state.etfFlow = null;
+  state.ssiIndexTicker = null;
+  state.constituents = null;
+  state.indexSnapshot = null;
+  state.snapshotSentiment = null;
+  state.newsTotal = null;
+  state.newsAttention = null;
+  state.newsCurrencyLabel = null;
 
   let cgId = null;
   if (isSSI && proxy) {
@@ -749,6 +904,9 @@ async function runDiagnosis() {
 
   document.getElementById('loading-text').textContent = `Fetching ${state.ticker} market data…`;
 
+  state.totalCount = 0;
+  state.liveCount = 0;
+
   // 1) Market chart from CoinGecko
   state.totalCount++;
   const market = await safeFetchJson(
@@ -763,38 +921,114 @@ async function runDiagnosis() {
     state.drawdown = stats.maxDrawdown;
   } else {
     state.errors.push('CoinGecko market_chart unavailable');
-    // Fallback heuristic by class
     state.volMult = isSSI ? (tickerUpper === 'MEME.SSI' ? 5.5 : tickerUpper === 'DEFI.SSI' ? 4.5 : 3.6)
                           : 4.0;
     state.vol = state.volMult * SP500_ANNUAL_VOL;
   }
 
-  // 2) ETF flow / institutional via SoSoValue (best-effort; opaque schema)
-  state.totalCount++;
-  if (isSSI && tickerUpper === 'MAG7.SSI') {
-    document.getElementById('loading-text').textContent = 'Checking institutional flows…';
-    const etf = await safeFetchJson('/api/sosovalue?endpoint=etf/list');
-    if (etf.ok && etf.data) {
+  // 2) SoSoValue: indices list + constituents + snapshot + news (+ ETFs for MAG7)
+  if (isSSI) {
+    document.getElementById('loading-text').textContent = 'Loading SoSoValue index data…';
+
+    state.totalCount++;
+    const listRes = await fetchSoso('indices');
+    let ix = null;
+    if (listRes.ok && listRes.data != null) {
       state.liveCount++;
-      state.etfFlow = extractEtfHint(etf.data);
+      ix = resolveSsiIndexTicker(state.ticker, normalizeIndicesList(listRes.data));
+      if (!ix) state.errors.push('Could not map ticker to SoSoValue index id');
     } else {
-      state.errors.push('SoSoValue ETF data unavailable');
-      state.etfFlow = null;
+      state.errors.push('SoSoValue indices list unavailable');
     }
-  } else {
-    // Non-MAG7 tickers: skip ETF lookup, count nothing
-    state.totalCount--;
+
+    if (ix) {
+      state.ssiIndexTicker = ix;
+
+      state.totalCount++;
+      const consRes = await fetchSoso(`indices/${ix}/constituents`);
+      let sorted = [];
+      if (consRes.ok) {
+        const rawCons = normalizeConstituentsPayload(consRes.data);
+        if (rawCons.length) {
+          state.liveCount++;
+          sorted = rawCons.slice().sort((a, b) => (Number(b.weight) || 0) - (Number(a.weight) || 0));
+          state.constituents = sorted;
+        } else {
+          state.errors.push('SoSoValue constituents empty or unexpected shape');
+        }
+      } else {
+        state.errors.push('SoSoValue constituents unavailable');
+      }
+
+      const top = sorted[0];
+      const currencyId = top?.currency_id;
+      state.newsCurrencyLabel = top?.symbol ? String(top.symbol).toUpperCase() : null;
+
+      state.totalCount++;
+      state.totalCount++;
+      document.getElementById('loading-text').textContent = 'Loading snapshot & news feed…';
+      const newsQuery = {
+        page: 1,
+        page_size: 20,
+        language: 'en'
+      };
+      if (currencyId) newsQuery.currency_id = currencyId;
+
+      const [snapRes, newsRes] = await Promise.all([
+        fetchSoso(`indices/${ix}/market-snapshot`),
+        fetchSoso('news', newsQuery)
+      ]);
+
+      if (snapRes.ok && snapRes.data && typeof snapRes.data === 'object') {
+        state.liveCount++;
+        state.indexSnapshot = snapRes.data;
+        state.snapshotSentiment = snapshotSentimentFromApi(snapRes.data);
+        const px = snapRes.data.price;
+        if (typeof px === 'number') {
+          state.priceSource = `CoinGecko vol proxy · SoSoValue index $${px.toFixed(2)}`;
+        }
+      } else {
+        state.errors.push('SoSoValue market snapshot unavailable');
+      }
+
+      if (newsRes.ok && newsRes.data && typeof newsRes.data === 'object') {
+        state.liveCount++;
+        const total = newsRes.data.total;
+        const list = newsRes.data.list;
+        if (typeof total === 'number') state.newsTotal = total;
+        state.newsAttention = attentionFromNewsList(Array.isArray(list) ? list : []);
+      } else {
+        state.errors.push('SoSoValue news feed unavailable');
+      }
+    }
+
+    if (tickerUpper === 'MAG7.SSI') {
+      document.getElementById('loading-text').textContent = 'Checking ETF tape…';
+      state.totalCount++;
+      const etf = await fetchSoso('etfs');
+      if (etf.ok && etf.data != null) {
+        state.liveCount++;
+        state.etfFlow = extractEtfHint(etf.data);
+      } else {
+        state.errors.push('SoSoValue ETF list unavailable');
+        state.etfFlow = null;
+      }
+    }
   }
 
-  // 3) Risk score
+  // Risk score
   const baseScore = volMultToScore(state.volMult);
   const adjusted = clamp(baseScore + state.bias.adjustment, 0, 100);
   state.riskScore = Math.round(adjusted);
 
-  // 4) SBSI
+  // SBSI
   let sbsi = 100 - state.riskScore;
   if (state.etfFlow && state.etfFlow.positive) sbsi += 5;
   if (state.etfFlow && state.etfFlow.positive === false) sbsi -= 5;
+  if (state.snapshotSentiment && typeof state.snapshotSentiment.pct24h === 'number') {
+    if (state.snapshotSentiment.pct24h > 0.25) sbsi += 3;
+    else if (state.snapshotSentiment.pct24h < -0.25) sbsi -= 3;
+  }
   state.sbsi = Math.round(clamp(sbsi, 0, 100));
 
   state.fetchedAt = new Date();
@@ -941,6 +1175,8 @@ function renderAll() {
     `If S&amp;P500 drops <strong>-5%</strong>, ${state.ticker} could drop ` +
     `<strong>-${lo}% to -${hi}%</strong> — based on ${state.volMult.toFixed(1)}× historical volatility.`;
 
+  renderSosoIndexCard();
+
   // Detail cards
   document.getElementById('d-vol').textContent = state.vol
     ? `${(state.vol * 100).toFixed(0)}%` : '—';
@@ -978,6 +1214,7 @@ function renderAll() {
 
   // Transparency
   document.getElementById('t-ticker').textContent = state.ticker;
+  document.getElementById('t-soso-index').textContent = state.ssiIndexTicker || '—';
   document.getElementById('t-price-src').textContent = state.priceSource;
   document.getElementById('t-bias').textContent = `+${state.bias.adjustment}`;
   document.getElementById('t-fetched').textContent = state.fetchedAt
@@ -986,6 +1223,84 @@ function renderAll() {
   document.getElementById('t-status').textContent = state.errors.length
     ? `${state.liveCount}/${state.totalCount} live · ${state.errors.length} fallback`
     : `${state.liveCount}/${state.totalCount} live · all good`;
+}
+
+function renderSosoIndexCard() {
+  const card = document.getElementById('soso-index-card');
+  const meta = document.getElementById('soso-resolve-meta');
+  const priceEl = document.getElementById('soso-price');
+  const momoEl = document.getElementById('soso-momo');
+  const newsTotalEl = document.getElementById('soso-news-total');
+  const attEl = document.getElementById('soso-attention');
+  const listEl = document.getElementById('soso-const-list');
+  const foot = document.getElementById('soso-footnote');
+
+  if (!state.ticker.toUpperCase().endsWith('.SSI')) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+
+  meta.textContent = state.ssiIndexTicker ? `API id: ${state.ssiIndexTicker}` : 'Index id not resolved';
+
+  const snap = state.indexSnapshot;
+  priceEl.style.color = '#1A1A2E';
+  if (snap && typeof snap.price === 'number') {
+    priceEl.textContent = `$${Number(snap.price).toFixed(2)}`;
+  } else {
+    priceEl.textContent = '—';
+    priceEl.style.color = '#9CA3AF';
+  }
+
+  const ss = state.snapshotSentiment;
+  if (ss && typeof ss.pct24h === 'number') {
+    const sign = ss.pct24h >= 0 ? '+' : '';
+    momoEl.textContent = `${sign}${ss.pct24h.toFixed(2)}% · ${ss.label}`;
+    momoEl.style.color = ss.pct24h >= 0 ? '#059669' : '#DC2626';
+  } else {
+    momoEl.textContent = '—';
+    momoEl.style.color = '#9CA3AF';
+  }
+
+  newsTotalEl.style.color = '#1A1A2E';
+  if (state.newsTotal != null) {
+    const lbl = state.newsCurrencyLabel ? ` · filter ${state.newsCurrencyLabel}` : '';
+    newsTotalEl.textContent = `${state.newsTotal}${lbl}`;
+  } else {
+    newsTotalEl.textContent = '—';
+    newsTotalEl.style.color = '#9CA3AF';
+  }
+
+  attEl.style.color = '#185FA5';
+  if (state.newsAttention != null) {
+    attEl.textContent = `${state.newsAttention} / 100`;
+  } else {
+    attEl.textContent = '—';
+    attEl.style.color = '#9CA3AF';
+  }
+
+  listEl.innerHTML = '';
+  const rows = state.constituents;
+  if (rows && rows.length) {
+    const title = document.createElement('div');
+    title.className = 'detail-title';
+    title.style.marginTop = '4px';
+    title.style.marginBottom = '6px';
+    title.textContent = 'Basket constituents';
+    listEl.appendChild(title);
+    rows.slice(0, 12).forEach((c) => {
+      const sym = String(c.symbol || '—').toUpperCase();
+      const w = typeof c.weight === 'number' ? `${(c.weight * 100).toFixed(1)}%` : '—';
+      const div = document.createElement('div');
+      div.className = 'soso-const-item';
+      div.innerHTML = `<span class="soso-sym">${sym}</span><span class="soso-w">${w}</span>`;
+      listEl.appendChild(div);
+    });
+    foot.textContent =
+      'Weights from GET /indices/{index}/constituents. News total uses GET /news with the top constituent currency_id.';
+  } else {
+    foot.textContent = 'Constituents unavailable — check SoSoValue index mapping for this SSI.';
+  }
 }
 
 function renderLayerScorecard() {
@@ -1099,7 +1414,12 @@ async function fetchAi() {
         etfFlow: state.etfFlow ? (state.etfFlow.positive ? 'Net Inflow' : 'Net Outflow') : 'N/A',
         safetyScore: state.sbsi,
         volatilityMultiple: Number(state.volMult.toFixed(2)),
-        signal: tier.label
+        signal: tier.label,
+        indexMomentum: state.snapshotSentiment
+          ? `${state.snapshotSentiment.label} (${state.snapshotSentiment.pct24h.toFixed(2)}% 24h)`
+          : 'N/A',
+        newsFeedTotal: state.newsTotal != null ? state.newsTotal : 'N/A',
+        newsAttention: state.newsAttention != null ? state.newsAttention : 'N/A'
       })
     });
     if (!res.ok) return;

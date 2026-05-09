@@ -2,10 +2,13 @@
  * SafeBridge AI - SoSoValue API Proxy
  * Vercel Function: /api/sosovalue
  *
- * Usage:
- *   GET /api/sosovalue?endpoint=index/list
- *   GET /api/sosovalue?endpoint=etf/list
- *   GET /api/sosovalue?endpoint=fundraising/projects&project_id=xxx
+ * Base URL matches official docs: https://openapi.sosovalue.com/openapi/v1
+ *
+ * Usage (endpoint = path after base, no leading slash):
+ *   GET /api/sosovalue?endpoint=indices
+ *   GET /api/sosovalue?endpoint=indices%2Fssimag7%2Fconstituents
+ *   GET /api/sosovalue?endpoint=news&currency_id=...&page=1&page_size=20
+ *   GET /api/sosovalue?endpoint=etfs
  */
 
 export default async function handler(req, res) {
@@ -35,9 +38,10 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API key not configured' });
   }
 
-  // Build query string
+  const base = 'https://openapi.sosovalue.com/openapi/v1';
+  const path = String(endpoint).replace(/^\/+/, '');
   const queryString = new URLSearchParams(params).toString();
-  const url = `https://openapi.sosovalue.com/v1/${endpoint}${queryString ? '?' + queryString : ''}`;
+  const url = `${base}/${path}${queryString ? '?' + queryString : ''}`;
 
   try {
     const response = await fetch(url, {

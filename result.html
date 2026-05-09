@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SafeBridge AI - Risk Analysis Result</title>
+  <meta name="theme-color" content="#185FA5">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <style>body{visibility:hidden}</style>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -47,6 +50,7 @@
       align-items: center;
       gap: 10px;
       margin-bottom: 20px;
+      flex-wrap: wrap;
     }
     .ticker-badge {
       font-size: 13px; font-weight: 600;
@@ -55,6 +59,18 @@
       background: #EFF6FF; color: #1D4ED8;
     }
     .ticker-sub { font-size: 13px; color: #6B7280; }
+    .live-pill {
+      font-size: 11px; padding: 3px 10px;
+      border-radius: 20px;
+      background: #ECFDF5; color: #047857;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .live-pill.fallback { background: #FEF3C7; color: #92400E; }
+    .live-pill .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #10B981;
+    }
+    .live-pill.fallback .dot { background: #F59E0B; }
 
     /* CARDS */
     .card {
@@ -69,29 +85,52 @@
       margin-bottom: 8px; font-weight: 400;
     }
 
-    /* SIGNAL */
+    /* 7-TIER SIGNAL */
     .signal-row {
       display: flex; align-items: center; gap: 14px;
     }
     .signal-dot {
-      width: 40px; height: 40px;
+      width: 44px; height: 44px;
       border-radius: 50%; flex-shrink: 0;
+      box-shadow: 0 0 0 4px rgba(0,0,0,0.04);
     }
-    .signal-label { font-size: 22px; font-weight: 600; }
+    .signal-label { font-size: 20px; font-weight: 600; }
     .signal-sub { font-size: 13px; color: #6B7280; margin-top: 3px; }
-    .score-bar-bg {
-      background: #F3F4F6;
-      border-radius: 6px; height: 8px;
-      margin-top: 14px; overflow: hidden;
+    .tier-bar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      margin-top: 16px;
     }
-    .score-bar-fill {
-      height: 8px; border-radius: 6px;
-      transition: width 1.2s ease;
+    .tier-cell {
+      height: 10px;
+      border-radius: 3px;
+      opacity: 0.25;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .tier-cell.active {
+      opacity: 1;
+      transform: scaleY(1.4);
+    }
+    .tier-legend {
+      display: flex; justify-content: space-between;
+      font-size: 10px; color: #9CA3AF;
+      margin-top: 8px;
     }
     .score-num {
       font-size: 12px; color: #9CA3AF;
-      text-align: right; margin-top: 4px;
+      text-align: right; margin-top: 6px;
     }
+    .bias-note {
+      font-size: 11px;
+      color: #6B7280;
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #FEF3C7;
+      border-radius: 8px;
+      display: none;
+    }
+    .bias-note.show { display: block; }
 
     /* COMPARE */
     .compare-row {
@@ -126,6 +165,49 @@
       text-align: right; margin-top: 6px;
     }
 
+    /* SBSI CARD */
+    .sbsi-card {
+      background: linear-gradient(135deg, #EFF6FF 0%, #ECFDF5 100%);
+      border-radius: 16px;
+      padding: 18px 20px;
+      border: 1px solid #DBEAFE;
+      margin-bottom: 12px;
+    }
+    .sbsi-head {
+      display: flex; align-items: baseline;
+      justify-content: space-between; margin-bottom: 6px;
+    }
+    .sbsi-name {
+      font-size: 14px; font-weight: 600; color: #185FA5;
+    }
+    .sbsi-tag {
+      font-size: 10px; padding: 2px 8px;
+      border-radius: 10px;
+      background: #fff; color: #6B7280;
+    }
+    .sbsi-score-row {
+      display: flex; align-items: baseline; gap: 6px;
+      margin-bottom: 6px;
+    }
+    .sbsi-score {
+      font-size: 32px; font-weight: 700; color: #185FA5;
+    }
+    .sbsi-of { font-size: 14px; color: #9CA3AF; }
+    .sbsi-desc {
+      font-size: 13px; color: #1F2937;
+      line-height: 1.6;
+    }
+    .sbsi-bar-bg {
+      background: rgba(255,255,255,0.7);
+      border-radius: 6px; height: 8px;
+      margin-top: 12px; overflow: hidden;
+    }
+    .sbsi-bar-fill {
+      height: 8px; border-radius: 6px;
+      background: #185FA5;
+      transition: width 1.2s ease;
+    }
+
     /* DETAIL GRID */
     .detail-grid {
       display: grid;
@@ -144,46 +226,51 @@
     .detail-sub { font-size: 11px; color: #9CA3AF; margin-top: 3px; }
     .detail-source { font-size: 10px; color: #D1D5DB; margin-top: 6px; }
 
-    /* BACKTEST */
-    .period-tabs {
-      display: flex; gap: 8px; margin-bottom: 14px;
-    }
-    .period-tab {
-      padding: 5px 14px;
-      border-radius: 20px;
-      font-size: 12px; cursor: pointer;
-      border: 1px solid #E8ECF0;
-      background: #fff; color: #6B7280;
-      transition: all 0.15s;
-    }
-    .period-tab.active {
-      background: #185FA5; color: #fff; border-color: #185FA5;
-    }
-    .bt-grid {
+    /* LAYER SCORECARD */
+    .layer-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
     }
-    .bt-item {
-      text-align: center;
-      padding: 12px 8px;
-      background: #F9FAFB;
-      border-radius: 10px;
+    .layer-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 14px 16px;
+      border: 1px solid #E8ECF0;
     }
-    .bt-val { font-size: 18px; font-weight: 700; }
-    .bt-label { font-size: 11px; color: #9CA3AF; margin-top: 3px; }
-    .crash-note {
-      font-size: 12px; line-height: 1.6;
-      padding: 10px 14px;
-      background: #FEF2F2;
-      border-radius: 10px;
-      color: #991B1B;
-      margin-top: 10px;
-      display: none;
+    .layer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      gap: 10px;
     }
-    .bt-disclaimer {
-      font-size: 11px; color: #9CA3AF;
-      margin-top: 8px;
+    .layer-name {
+      font-size: 12px;
+      color: #6B7280;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .layer-badge {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #EFF6FF;
+      color: #185FA5;
+      font-weight: 600;
+    }
+    .layer-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1A1A2E;
+    }
+    .layer-note {
+      font-size: 12px;
+      color: #6B7280;
+      margin-top: 3px;
+      line-height: 1.6;
     }
 
     /* AI CARD */
@@ -201,6 +288,43 @@
     }
     .ai-text { font-size: 14px; line-height: 1.8; color: #1A1A2E; }
     .ai-text strong { color: #185FA5; }
+
+    /* TRANSPARENCY */
+    .transparency-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 0;
+      border: 1px solid #E8ECF0;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .trans-toggle {
+      width: 100%;
+      padding: 14px 18px;
+      background: none; border: none;
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer;
+      font-size: 13px; font-weight: 500;
+      color: #1A1A2E;
+    }
+    .trans-toggle:hover { background: #F9FAFB; }
+    .trans-arrow { transition: transform 0.2s; color: #9CA3AF; }
+    .trans-toggle.open .trans-arrow { transform: rotate(180deg); }
+    .trans-body {
+      display: none;
+      padding: 0 18px 16px;
+      font-size: 12px; color: #6B7280;
+      line-height: 1.7;
+    }
+    .trans-body.open { display: block; }
+    .trans-row {
+      display: flex; justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px dashed #F3F4F6;
+    }
+    .trans-row:last-child { border-bottom: none; }
+    .trans-key { color: #9CA3AF; }
+    .trans-val { color: #1A1A2E; font-weight: 500; }
 
     /* BUTTONS */
     .primary-btn {
@@ -242,22 +366,32 @@
     }
     .check { color: #059669; font-size: 13px; flex-shrink: 0; }
 
-    /* DEMO BADGE */
-    .demo-badge {
-      display: inline-block;
-      font-size: 11px; padding: 3px 10px;
-      border-radius: 20px;
-      background: #FEF3C7; color: #92400E;
-      margin-bottom: 16px;
+    /* LOADING */
+    .loading-overlay {
+      position: fixed; inset: 0;
+      background: rgba(245,247,250,0.95);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 300;
+      flex-direction: column;
+      gap: 14px;
     }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid #DBEAFE;
+      border-top-color: #185FA5;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 13px; color: #6B7280; }
+    .loading-overlay.hidden { display: none; }
   </style>
 </head>
 <body>
 
 <script>
 (() => {
-  // 提出期間など一時的に非公開にしたい時だけ true（全公開時は false）
-  const ENABLE_GUARD = true;
+  const ENABLE_GUARD = false;
   const PASS = "safebridge";
 
   if (!ENABLE_GUARD) {
@@ -320,11 +454,15 @@
 
     document.body.style.visibility = "visible";
   } catch {
-    // If storage is disabled, fail open to avoid blocking reviewers.
     document.body.style.visibility = "visible";
   }
 })();
 </script>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Fetching live market data…</div>
+</div>
 
 <nav>
   <span class="logo">SafeBridge AI</span>
@@ -333,51 +471,69 @@
 
 <div class="main">
 
-  <span class="demo-badge">⚠️ Demo — Dummy data. Live API integration coming in Wave 1.</span>
-
   <div class="ticker-row">
     <span class="ticker-badge" id="ticker-badge">MAG7.ssi</span>
     <span class="ticker-sub">Risk Analysis Result</span>
+    <span class="live-pill" id="live-pill"><span class="dot"></span><span id="live-pill-text">Live data</span></span>
   </div>
 
-  <!-- RISK SCORE -->
-  <p class="section-label">Overall Risk Score</p>
+  <!-- 7-TIER SIGNAL -->
+  <p class="section-label">Overall Risk Signal (7-tier)</p>
   <div class="card">
     <div class="signal-row">
-      <div class="signal-dot" style="background:#F59E0B;"></div>
+      <div class="signal-dot" id="signal-dot" style="background:#9CA3AF;"></div>
       <div>
-        <div class="signal-label">Moderate-High Risk</div>
-        <div class="signal-sub">Approx. 2.1× more volatile than S&P500</div>
+        <div class="signal-label" id="signal-label">Calculating…</div>
+        <div class="signal-sub" id="signal-sub">Comparing to S&amp;P500</div>
       </div>
     </div>
-    <div class="score-bar-bg">
-      <div class="score-bar-fill" id="score-bar" style="width:0%;background:#F59E0B;"></div>
+    <div class="tier-bar" id="tier-bar"></div>
+    <div class="tier-legend">
+      <span>Lower risk</span>
+      <span>Higher risk</span>
     </div>
-    <div class="score-num">65 / 100</div>
+    <div class="score-num"><span id="score-num">—</span> / 100</div>
+    <div class="bias-note" id="bias-note"></div>
+  </div>
+
+  <!-- SBSI -->
+  <p class="section-label">SBSI — SafeBridge Sentiment Index</p>
+  <div class="sbsi-card">
+    <div class="sbsi-head">
+      <span class="sbsi-name">SBSI Score</span>
+      <span class="sbsi-tag">Index-investor view</span>
+    </div>
+    <div class="sbsi-score-row">
+      <span class="sbsi-score" id="sbsi-score">—</span>
+      <span class="sbsi-of">/ 100</span>
+    </div>
+    <div class="sbsi-desc" id="sbsi-desc">Calculating…</div>
+    <div class="sbsi-bar-bg">
+      <div class="sbsi-bar-fill" id="sbsi-bar" style="width:0%"></div>
+    </div>
   </div>
 
   <!-- S&P500 COMPARISON -->
-  <p class="section-label">S&P500 Comparison</p>
+  <p class="section-label">S&amp;P500 Comparison</p>
   <div class="card">
     <div class="compare-row">
-      <span class="compare-label">S&P500</span>
+      <span class="compare-label">S&amp;P500</span>
       <div class="cbar-bg">
-        <div class="cbar-fill" style="width:30%;background:#DBEAFE;">
+        <div class="cbar-fill" style="width:14%;background:#DBEAFE;">
           <span class="cbar-text" style="color:#1D4ED8;">1.0×</span>
         </div>
       </div>
     </div>
     <div class="compare-row">
-      <span class="compare-label">MAG7.ssi</span>
+      <span class="compare-label" id="ssi-label">MAG7.ssi</span>
       <div class="cbar-bg">
         <div class="cbar-fill" id="ssi-bar" style="width:0%;background:#FEF3C7;">
-          <span class="cbar-text" style="color:#92400E;">2.1×</span>
+          <span class="cbar-text" id="ssi-bar-text" style="color:#92400E;">—</span>
         </div>
       </div>
     </div>
-    <div class="scenario-box">
-      If S&P500 drops <strong>-5%</strong>, MAG7.ssi could drop
-      <strong>-10% to -25%</strong> — based on historical correlation.
+    <div class="scenario-box" id="scenario-box">
+      Calculating scenario…
     </div>
     <div class="powered">Powered by SoSoValue API · CoinGecko</div>
   </div>
@@ -386,77 +542,92 @@
   <p class="section-label">Detailed Analysis</p>
   <div class="detail-grid">
     <div class="detail-card">
+      <div class="detail-title">Annualized Volatility</div>
+      <div class="detail-val" id="d-vol">—</div>
+      <div class="detail-sub" id="d-vol-sub">90-day rolling</div>
+      <div class="detail-source">CoinGecko market_chart</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-title">30-day Return</div>
+      <div class="detail-val" id="d-ret">—</div>
+      <div class="detail-sub" id="d-ret-sub">vs. one month ago</div>
+      <div class="detail-source">CoinGecko market_chart</div>
+    </div>
+    <div class="detail-card">
+      <div class="detail-title">Max Drawdown (90d)</div>
+      <div class="detail-val" id="d-dd">—</div>
+      <div class="detail-sub">Worst peak-to-trough</div>
+      <div class="detail-source">CoinGecko market_chart</div>
+    </div>
+    <div class="detail-card">
       <div class="detail-title">Institutional Activity</div>
-      <div class="detail-val" style="color:#059669;">Net Buying</div>
-      <div class="detail-sub">ETF inflow +$2.2B this week</div>
-      <div class="detail-source">SoSoValue ETF API</div>
-    </div>
-    <div class="detail-card">
-      <div class="detail-title">Project Safety</div>
-      <div class="detail-val">Score: 72 / 100</div>
-      <div class="detail-sub">Paradigm · a16z backed</div>
-      <div class="detail-source">SoSoValue / RootData</div>
-    </div>
-    <div class="detail-card">
-      <div class="detail-title">Fund Flow</div>
-      <div class="detail-val" style="color:#059669;">Stable</div>
-      <div class="detail-sub">No outflow in 30 days</div>
-      <div class="detail-source">SoSoValue API</div>
-    </div>
-    <div class="detail-card">
-      <div class="detail-title">Market Sentiment</div>
-      <div class="detail-val" style="color:#F59E0B;">Neutral</div>
-      <div class="detail-sub">Fear &amp; Greed: 52</div>
-      <div class="detail-source">SoSoValue Feeds</div>
+      <div class="detail-val" id="d-etf">—</div>
+      <div class="detail-sub" id="d-etf-sub">ETF flow proxy</div>
+      <div class="detail-source">SoSoValue</div>
     </div>
   </div>
 
-  <!-- BACKTEST -->
-  <p class="section-label">Historical Performance (Backtest)</p>
-  <div class="period-tabs">
-    <div class="period-tab active" onclick="setPeriod(this,'normal')">Normal (6 months)</div>
-    <div class="period-tab" onclick="setPeriod(this,'crash')">Bear Market (2022)</div>
-  </div>
-  <div class="card" style="padding-top:14px;">
-    <div class="bt-grid">
-      <div class="bt-item">
-        <div class="bt-val" id="bt-accuracy" style="color:#059669;">68%</div>
-        <div class="bt-label">Signal Accuracy</div>
+  <!-- LAYER SCORECARD -->
+  <p class="section-label">Layer Scorecard (L2-L4)</p>
+  <div class="layer-grid">
+    <div class="layer-card">
+      <div class="layer-head">
+        <span class="layer-name">Layer 2 · Safety</span>
+        <span class="layer-badge" id="l2-badge">Checking…</span>
       </div>
-      <div class="bt-item">
-        <div class="bt-val" id="bt-return" style="color:#059669;">+12.3%</div>
-        <div class="bt-label">Avg. 30-day Return</div>
-      </div>
-      <div class="bt-item">
-        <div class="bt-val" id="bt-sp">+4.2%</div>
-        <div class="bt-label">S&P500 (same period)</div>
-      </div>
+      <div class="layer-value" id="l2-value">Data quality check in progress.</div>
+      <div class="layer-note" id="l2-note">Verifies live coverage, fallback usage, and reliability before action guidance.</div>
     </div>
-    <div class="crash-note" id="crash-note">
-      During the 2022 bear market: MAG7.ssi dropped up to <strong>-68%</strong>,
-      while S&P500 dropped <strong>-19%</strong>.<br>
-      However, from 2023 onward it recovered with +180% returns.
-      Transparency matters — we show the bad times too.
+    <div class="layer-card">
+      <div class="layer-head">
+        <span class="layer-name">Layer 3 · Action</span>
+        <span class="layer-badge" id="l3-badge">Preparing…</span>
+      </div>
+      <div class="layer-value" id="l3-value">Action signal pending.</div>
+      <div class="layer-note" id="l3-note">Converts risk score + behavioral profile into a practical allocation stance.</div>
     </div>
-    <div class="bt-disclaimer">Based on historical data. Past performance does not guarantee future results.</div>
+    <div class="layer-card">
+      <div class="layer-head">
+        <span class="layer-name">Layer 4 · Backtest</span>
+        <span class="layer-badge" id="l4-badge">Estimating…</span>
+      </div>
+      <div class="layer-value" id="l4-value">Backtest proxy pending.</div>
+      <div class="layer-note" id="l4-note">Uses 90-day return and drawdown as a Wave1 proxy until full backtest engine.</div>
+    </div>
   </div>
 
   <!-- AI RECOMMENDATION -->
   <p class="section-label">AI Recommendation</p>
   <div class="ai-card">
     <div class="ai-header">🤖 SafeBridge AI says</div>
-    <div class="ai-text">
-      Institutional investors are currently buying, but volatility is
-      <strong>2× higher than S&P500</strong>.<br><br>
-      <strong>If you're just starting: consider allocating 2–3% of your portfolio to MAG7.ssi.</strong><br><br>
-      Keep your S&P500 index fund untouched — think of this as a small
-      "plus alpha" experiment, not a replacement.
+    <div class="ai-text" id="ai-text">Generating personalized advice…</div>
+  </div>
+
+  <!-- TRANSPARENCY -->
+  <p class="section-label">Diagnosis Transparency</p>
+  <div class="transparency-card">
+    <button class="trans-toggle" id="trans-toggle" onclick="toggleTrans()">
+      <span>How was this calculated?</span>
+      <span class="trans-arrow">▾</span>
+    </button>
+    <div class="trans-body" id="trans-body">
+      <div class="trans-row"><span class="trans-key">Ticker</span><span class="trans-val" id="t-ticker">—</span></div>
+      <div class="trans-row"><span class="trans-key">Price source</span><span class="trans-val" id="t-price-src">—</span></div>
+      <div class="trans-row"><span class="trans-key">Volatility window</span><span class="trans-val" id="t-window">90 days, daily close</span></div>
+      <div class="trans-row"><span class="trans-key">S&amp;P500 baseline</span><span class="trans-val">~13.5% annualized vol</span></div>
+      <div class="trans-row"><span class="trans-key">Bias adjustment</span><span class="trans-val" id="t-bias">+0</span></div>
+      <div class="trans-row"><span class="trans-key">Data fetched at</span><span class="trans-val" id="t-fetched">—</span></div>
+      <div class="trans-row"><span class="trans-key">API status</span><span class="trans-val" id="t-status">—</span></div>
+      <div style="margin-top:10px;line-height:1.6;">
+        Score = base(volatility multiple) + bias adjustment, clamped 0–100.<br>
+        SBSI ≈ 100 − Risk + flow bonus, clamped 0–100.
+      </div>
     </div>
   </div>
 
   <!-- ACTIONS -->
   <a href="https://ssi.sosovalue.com" target="_blank" rel="noopener">
-    <button class="primary-btn">View MAG7.ssi on SoSoValue →</button>
+    <button class="primary-btn" id="cta-btn">View MAG7.ssi on SoSoValue →</button>
   </a>
   <p style="font-size:11px;color:#9CA3AF;text-align:center;margin-top:-6px;margin-bottom:12px;">
     * Purchases are made on SoSoValue's official site. SafeBridge AI does not handle any transactions.
@@ -487,38 +658,484 @@
 </div>
 
 <script>
-  // Get ticker from URL param
+// ---------- CONSTANTS ----------
+const SP500_ANNUAL_VOL = 0.135;
+
+const TIERS = [
+  { max: 14,  label: 'Very Low Risk',     color: '#15803D', sub: 'Lower than S&P500',         tone: 'safe' },
+  { max: 29,  label: 'Low Risk',          color: '#22C55E', sub: 'Roughly S&P500-like',       tone: 'safe' },
+  { max: 44,  label: 'Moderate-Low Risk', color: '#84CC16', sub: 'Slightly more volatile',    tone: 'mild' },
+  { max: 59,  label: 'Moderate Risk',     color: '#EAB308', sub: 'Noticeably more volatile',  tone: 'mild' },
+  { max: 74,  label: 'Moderate-High Risk',color: '#F97316', sub: 'Around 2× S&P500',          tone: 'warn' },
+  { max: 89,  label: 'High Risk',         color: '#EF4444', sub: '3–5× S&P500 volatility',    tone: 'warn' },
+  { max: 100, label: 'Very High Risk',    color: '#B91C1C', sub: 'Speculative-only territory',tone: 'danger' },
+];
+
+const COIN_GECKO_ID = {
+  BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', BNB: 'binancecoin',
+  XRP: 'ripple', DOGE: 'dogecoin', SHIB: 'shiba-inu', PEPE: 'pepe',
+  AVAX: 'avalanche-2', LINK: 'chainlink', UNI: 'uniswap',
+  ADA: 'cardano', DOT: 'polkadot', LTC: 'litecoin'
+};
+
+const SSI_PROXY = {
+  'MAG7.SSI': { id: 'bitcoin', label: 'BTC (proxy)' },
+  'MEME.SSI': { id: 'dogecoin', label: 'DOGE (proxy)' },
+  'DEFI.SSI': { id: 'uniswap', label: 'UNI (proxy)' }
+};
+
+// ---------- STATE ----------
+const state = {
+  ticker: 'MAG7.ssi',
+  bias: { adjustment: 0, tags: [] },
+  liveCount: 0,
+  totalCount: 0,
+  fetchedAt: null,
+  errors: [],
+  riskScore: null,
+  volMult: null,
+  sbsi: null,
+  vol: null,
+  ret30: null,
+  drawdown: null,
+  etfFlow: null,
+  priceSource: '—'
+};
+
+// ---------- ENTRY ----------
+(async function init() {
   const params = new URLSearchParams(location.search);
-  const ticker = params.get('ticker') || 'MAG7.ssi';
-  document.getElementById('ticker-badge').textContent = ticker;
+  state.ticker = (params.get('ticker') || 'MAG7.ssi').trim();
+  document.getElementById('ticker-badge').textContent = state.ticker;
+  document.getElementById('ssi-label').textContent = state.ticker;
+  document.getElementById('cta-btn').textContent = state.ticker.toUpperCase().endsWith('.SSI')
+    ? `View ${state.ticker} on SoSoValue →`
+    : `Explore SSI on SoSoValue →`;
 
-  // Animate bars on load
-  setTimeout(() => {
-    document.getElementById('score-bar').style.width = '65%';
-    document.getElementById('ssi-bar').style.width = '63%';
-  }, 300);
+  loadBias();
+  await runDiagnosis();
+  renderAll();
+  fetchAi();
+})();
 
-  // Backtest period toggle
-  function setPeriod(el, mode) {
-    document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    const note = document.getElementById('crash-note');
-    if (mode === 'crash') {
-      document.getElementById('bt-accuracy').textContent = '41%';
-      document.getElementById('bt-accuracy').style.color = '#DC2626';
-      document.getElementById('bt-return').textContent = '-68%';
-      document.getElementById('bt-return').style.color = '#DC2626';
-      document.getElementById('bt-sp').textContent = '-19%';
-      note.style.display = 'block';
+function loadBias() {
+  try {
+    const raw = sessionStorage.getItem('sb_bias');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data && typeof data.adjustment === 'number') {
+      state.bias = { adjustment: data.adjustment, tags: data.tags || [] };
+    }
+  } catch {}
+}
+
+// ---------- DIAGNOSIS PIPELINE ----------
+async function runDiagnosis() {
+  const tickerUpper = state.ticker.toUpperCase();
+  const isSSI = tickerUpper.endsWith('.SSI');
+  const proxy = SSI_PROXY[tickerUpper];
+
+  let cgId = null;
+  if (isSSI && proxy) {
+    cgId = proxy.id;
+    state.priceSource = `CoinGecko · ${proxy.label}`;
+  } else if (COIN_GECKO_ID[tickerUpper]) {
+    cgId = COIN_GECKO_ID[tickerUpper];
+    state.priceSource = `CoinGecko · ${tickerUpper}`;
+  } else {
+    cgId = tickerUpper.toLowerCase();
+    state.priceSource = `CoinGecko · ${cgId}`;
+  }
+
+  document.getElementById('loading-text').textContent = `Fetching ${state.ticker} market data…`;
+
+  // 1) Market chart from CoinGecko
+  state.totalCount++;
+  const market = await safeFetchJson(
+    `/api/coingecko?endpoint=${encodeURIComponent('coins/' + cgId + '/market_chart')}&vs_currency=usd&days=90`
+  );
+  if (market.ok && market.data?.prices?.length > 30) {
+    state.liveCount++;
+    const stats = computeStats(market.data.prices);
+    state.vol = stats.annualVol;
+    state.volMult = stats.annualVol / SP500_ANNUAL_VOL;
+    state.ret30 = stats.return30d;
+    state.drawdown = stats.maxDrawdown;
+  } else {
+    state.errors.push('CoinGecko market_chart unavailable');
+    // Fallback heuristic by class
+    state.volMult = isSSI ? (tickerUpper === 'MEME.SSI' ? 5.5 : tickerUpper === 'DEFI.SSI' ? 4.5 : 3.6)
+                          : 4.0;
+    state.vol = state.volMult * SP500_ANNUAL_VOL;
+  }
+
+  // 2) ETF flow / institutional via SoSoValue (best-effort; opaque schema)
+  state.totalCount++;
+  if (isSSI && tickerUpper === 'MAG7.SSI') {
+    document.getElementById('loading-text').textContent = 'Checking institutional flows…';
+    const etf = await safeFetchJson('/api/sosovalue?endpoint=etf/list');
+    if (etf.ok && etf.data) {
+      state.liveCount++;
+      state.etfFlow = extractEtfHint(etf.data);
     } else {
-      document.getElementById('bt-accuracy').textContent = '68%';
-      document.getElementById('bt-accuracy').style.color = '#059669';
-      document.getElementById('bt-return').textContent = '+12.3%';
-      document.getElementById('bt-return').style.color = '#059669';
-      document.getElementById('bt-sp').textContent = '+4.2%';
-      note.style.display = 'none';
+      state.errors.push('SoSoValue ETF data unavailable');
+      state.etfFlow = null;
+    }
+  } else {
+    // Non-MAG7 tickers: skip ETF lookup, count nothing
+    state.totalCount--;
+  }
+
+  // 3) Risk score
+  const baseScore = volMultToScore(state.volMult);
+  const adjusted = clamp(baseScore + state.bias.adjustment, 0, 100);
+  state.riskScore = Math.round(adjusted);
+
+  // 4) SBSI
+  let sbsi = 100 - state.riskScore;
+  if (state.etfFlow && state.etfFlow.positive) sbsi += 5;
+  if (state.etfFlow && state.etfFlow.positive === false) sbsi -= 5;
+  state.sbsi = Math.round(clamp(sbsi, 0, 100));
+
+  state.fetchedAt = new Date();
+}
+
+async function safeFetchJson(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return { ok: false, status: res.status };
+    const data = await res.json();
+    if (data?.error) return { ok: false, error: data.error };
+    return { ok: true, data };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+function computeStats(prices) {
+  // prices: [[ts, price], ...]
+  const closes = prices.map(p => p[1]);
+  const rets = [];
+  for (let i = 1; i < closes.length; i++) {
+    if (closes[i - 1] > 0) {
+      rets.push(Math.log(closes[i] / closes[i - 1]));
     }
   }
+  const mean = rets.reduce((a, b) => a + b, 0) / rets.length;
+  const variance = rets.reduce((a, b) => a + (b - mean) ** 2, 0) / rets.length;
+  const dailyVol = Math.sqrt(variance);
+  const annualVol = dailyVol * Math.sqrt(365);
+
+  // 30-day return
+  const last = closes[closes.length - 1];
+  const past = closes[Math.max(0, closes.length - 31)];
+  const return30d = (last - past) / past;
+
+  // Max drawdown
+  let peak = -Infinity;
+  let maxDD = 0;
+  for (const p of closes) {
+    if (p > peak) peak = p;
+    const dd = (p - peak) / peak;
+    if (dd < maxDD) maxDD = dd;
+  }
+
+  return { annualVol, return30d, maxDrawdown: maxDD };
+}
+
+function volMultToScore(volMult) {
+  // 1× → 20, 5× → 52, 10× → 92, capped 5..95
+  return clamp(20 + (volMult - 1) * 8, 5, 95);
+}
+
+function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+function extractEtfHint(data) {
+  // Best-effort: recursively look for any "netInflow" / "flow" numeric fields
+  let total = 0; let found = false;
+  const walk = (node, depth = 0) => {
+    if (depth > 4 || node == null) return;
+    if (typeof node === 'object') {
+      for (const k of Object.keys(node)) {
+        const v = node[k];
+        const lower = k.toLowerCase();
+        if ((lower.includes('flow') || lower.includes('inflow')) && typeof v === 'number') {
+          total += v; found = true;
+        } else if (typeof v === 'object') {
+          walk(v, depth + 1);
+        }
+      }
+    }
+  };
+  walk(data);
+  if (!found) return null;
+  return { total, positive: total > 0 };
+}
+
+// ---------- RENDER ----------
+function renderAll() {
+  document.getElementById('loading').classList.add('hidden');
+
+  // Live pill
+  const livePill = document.getElementById('live-pill');
+  const liveText = document.getElementById('live-pill-text');
+  if (state.liveCount === state.totalCount && state.totalCount > 0) {
+    livePill.classList.remove('fallback');
+    liveText.textContent = 'Live data';
+  } else if (state.liveCount > 0) {
+    livePill.classList.add('fallback');
+    liveText.textContent = `Partial live (${state.liveCount}/${state.totalCount})`;
+  } else {
+    livePill.classList.add('fallback');
+    liveText.textContent = 'Estimate (live unavailable)';
+  }
+
+  // 7-tier signal
+  const tier = TIERS.find(t => state.riskScore <= t.max) || TIERS[TIERS.length - 1];
+  document.getElementById('signal-dot').style.background = tier.color;
+  document.getElementById('signal-label').textContent = tier.label;
+  document.getElementById('signal-label').style.color = tier.color;
+  const volStr = state.volMult ? `${state.volMult.toFixed(1)}× more volatile than S&P500` : tier.sub;
+  document.getElementById('signal-sub').textContent = volStr;
+  document.getElementById('score-num').textContent = state.riskScore;
+
+  // Tier bar
+  const tierBar = document.getElementById('tier-bar');
+  tierBar.innerHTML = '';
+  TIERS.forEach((t, idx) => {
+    const cell = document.createElement('div');
+    cell.className = 'tier-cell';
+    cell.style.background = t.color;
+    if (t === tier) cell.classList.add('active');
+    tierBar.appendChild(cell);
+    setTimeout(() => { if (t === tier) cell.classList.add('active'); }, 200 + idx * 60);
+  });
+
+  // Bias note
+  if (state.bias.adjustment > 0) {
+    const note = document.getElementById('bias-note');
+    note.classList.add('show');
+    note.textContent = `Your behavioral profile (${state.bias.tags.join(', ')}) added +${state.bias.adjustment} to the base risk score.`;
+  }
+
+  // SBSI
+  document.getElementById('sbsi-score').textContent = state.sbsi;
+  document.getElementById('sbsi-desc').textContent = describeSbsi(state.sbsi);
+  setTimeout(() => {
+    document.getElementById('sbsi-bar').style.width = state.sbsi + '%';
+  }, 100);
+
+  // Compare bars
+  const cap = 6;
+  const ssiPct = Math.min(state.volMult / cap, 1) * 100;
+  const ssiBar = document.getElementById('ssi-bar');
+  setTimeout(() => { ssiBar.style.width = Math.max(ssiPct * 0.95, 14) + '%'; }, 200);
+  document.getElementById('ssi-bar-text').textContent = `${state.volMult.toFixed(1)}×`;
+  ssiBar.style.background = tier.color + '33';
+  document.getElementById('ssi-bar-text').style.color = tier.color;
+
+  // Scenario
+  const lo = (5 * state.volMult).toFixed(0);
+  const hi = (5 * state.volMult * 1.5).toFixed(0);
+  document.getElementById('scenario-box').innerHTML =
+    `If S&amp;P500 drops <strong>-5%</strong>, ${state.ticker} could drop ` +
+    `<strong>-${lo}% to -${hi}%</strong> — based on ${state.volMult.toFixed(1)}× historical volatility.`;
+
+  // Detail cards
+  document.getElementById('d-vol').textContent = state.vol
+    ? `${(state.vol * 100).toFixed(0)}%` : '—';
+  document.getElementById('d-vol-sub').textContent = state.vol
+    ? `vs. S&P500 ~${(SP500_ANNUAL_VOL * 100).toFixed(0)}%` : '90-day rolling';
+
+  if (state.ret30 != null) {
+    const sign = state.ret30 >= 0 ? '+' : '';
+    document.getElementById('d-ret').textContent = `${sign}${(state.ret30 * 100).toFixed(1)}%`;
+    document.getElementById('d-ret').style.color = state.ret30 >= 0 ? '#059669' : '#DC2626';
+  }
+
+  if (state.drawdown != null) {
+    document.getElementById('d-dd').textContent = `${(state.drawdown * 100).toFixed(1)}%`;
+    document.getElementById('d-dd').style.color = '#DC2626';
+  }
+
+  if (state.etfFlow) {
+    const positive = state.etfFlow.positive;
+    document.getElementById('d-etf').textContent = positive ? 'Net Inflow' : 'Net Outflow';
+    document.getElementById('d-etf').style.color = positive ? '#059669' : '#DC2626';
+    document.getElementById('d-etf-sub').textContent = `Aggregated SoSoValue ETF feed`;
+  } else if (state.ticker.toUpperCase() === 'MAG7.SSI') {
+    document.getElementById('d-etf').textContent = 'Live unavailable';
+    document.getElementById('d-etf').style.color = '#9CA3AF';
+    document.getElementById('d-etf-sub').textContent = 'SoSoValue ETF endpoint did not respond';
+  } else {
+    document.getElementById('d-etf').textContent = 'N/A';
+    document.getElementById('d-etf').style.color = '#9CA3AF';
+    document.getElementById('d-etf-sub').textContent = 'Only tracked for SSI baskets';
+  }
+
+  // Layer scorecard (L2-L4)
+  renderLayerScorecard();
+
+  // Transparency
+  document.getElementById('t-ticker').textContent = state.ticker;
+  document.getElementById('t-price-src').textContent = state.priceSource;
+  document.getElementById('t-bias').textContent = `+${state.bias.adjustment}`;
+  document.getElementById('t-fetched').textContent = state.fetchedAt
+    ? state.fetchedAt.toISOString().slice(0, 16).replace('T', ' ') + ' UTC'
+    : '—';
+  document.getElementById('t-status').textContent = state.errors.length
+    ? `${state.liveCount}/${state.totalCount} live · ${state.errors.length} fallback`
+    : `${state.liveCount}/${state.totalCount} live · all good`;
+}
+
+function renderLayerScorecard() {
+  // L2 Safety: live data coverage and fallback count
+  const l2Badge = document.getElementById('l2-badge');
+  const l2Value = document.getElementById('l2-value');
+  const l2Note = document.getElementById('l2-note');
+  if (state.totalCount > 0 && state.liveCount === state.totalCount) {
+    l2Badge.textContent = 'Healthy';
+    l2Value.textContent = `Live coverage ${state.liveCount}/${state.totalCount} (no fallback).`;
+    l2Note.textContent = 'Safety checks passed with full live data inputs.';
+  } else if (state.liveCount > 0) {
+    l2Badge.textContent = 'Partial';
+    l2Value.textContent = `Live coverage ${state.liveCount}/${state.totalCount}.`;
+    l2Note.textContent = `${state.errors.length} fallback path(s) used to keep diagnosis stable.`;
+  } else {
+    l2Badge.textContent = 'Fallback';
+    l2Value.textContent = 'No live inputs available, estimate mode active.';
+    l2Note.textContent = 'Output remains available, but confidence is reduced.';
+  }
+
+  // L3 Action: map risk band to a concrete stance
+  const l3Badge = document.getElementById('l3-badge');
+  const l3Value = document.getElementById('l3-value');
+  const l3Note = document.getElementById('l3-note');
+  const action = getActionGuidance();
+  l3Badge.textContent = action.badge;
+  l3Value.textContent = action.title;
+  l3Note.textContent = action.note;
+
+  // L4 Backtest: show quick evidence from realized 90d stats
+  const l4Badge = document.getElementById('l4-badge');
+  const l4Value = document.getElementById('l4-value');
+  const l4Note = document.getElementById('l4-note');
+  const bt = getBacktestProxy();
+  l4Badge.textContent = bt.badge;
+  l4Value.textContent = bt.title;
+  l4Note.textContent = bt.note;
+}
+
+function getActionGuidance() {
+  if (state.riskScore >= 80) {
+    return {
+      badge: 'Defensive',
+      title: 'Reduce risk: wait or keep allocation minimal.',
+      note: 'Signal suggests speculative conditions; avoid large entries.'
+    };
+  }
+  if (state.riskScore >= 60) {
+    return {
+      badge: 'Caution',
+      title: 'Small test size only (e.g. 1-3% of portfolio).',
+      note: 'Maintain core index allocation and avoid concentration.'
+    };
+  }
+  return {
+    badge: 'Balanced',
+    title: 'Staged entry is acceptable with strict sizing rules.',
+    note: 'Risk is relatively controlled, but keep crypto as satellite exposure.'
+  };
+}
+
+function getBacktestProxy() {
+  if (state.ret30 == null || state.drawdown == null) {
+    return {
+      badge: 'Limited',
+      title: 'Backtest proxy unavailable (insufficient live history).',
+      note: 'Wave1 uses a 90-day proxy; full multi-period backtest comes in later waves.'
+    };
+  }
+
+  const ret = `${state.ret30 >= 0 ? '+' : ''}${(state.ret30 * 100).toFixed(1)}%`;
+  const dd = `${(state.drawdown * 100).toFixed(1)}%`;
+  const badge = state.drawdown <= -40 ? 'Stress' : state.drawdown <= -25 ? 'Volatile' : 'Stable';
+  return {
+    badge,
+    title: `90d return ${ret} / max drawdown ${dd}.`,
+    note: 'Used as Layer 4 quick evidence for downside profile before full backtest rollout.'
+  };
+}
+
+function describeSbsi(score) {
+  if (score >= 75) return 'Strong fit for index-style investors. Volatility is contained and sentiment indicators are constructive.';
+  if (score >= 55) return 'Acceptable for a small allocation alongside your index funds. Watch position sizing.';
+  if (score >= 35) return 'Caution warranted. Treat any allocation as speculative and keep it small.';
+  return 'Not aligned with index-fund risk tolerance. Consider waiting or sticking with diversified SSIs.';
+}
+
+function toggleTrans() {
+  const btn = document.getElementById('trans-toggle');
+  const body = document.getElementById('trans-body');
+  btn.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+// ---------- AI RECOMMENDATION ----------
+async function fetchAi() {
+  const aiText = document.getElementById('ai-text');
+  const tier = TIERS.find(t => state.riskScore <= t.max) || TIERS[TIERS.length - 1];
+
+  const fallback = templateAdvice(tier);
+  aiText.innerHTML = fallback;
+
+  try {
+    const res = await fetch('/api/openrouter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ticker: state.ticker,
+        riskScore: state.riskScore,
+        etfFlow: state.etfFlow ? (state.etfFlow.positive ? 'Net Inflow' : 'Net Outflow') : 'N/A',
+        safetyScore: state.sbsi,
+        volatilityMultiple: Number(state.volMult.toFixed(2)),
+        signal: tier.label
+      })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data?.recommendation) {
+      aiText.textContent = data.recommendation;
+    }
+  } catch {}
+}
+
+function templateAdvice(tier) {
+  const t = state.ticker;
+  const mult = state.volMult.toFixed(1);
+  const sbsi = state.sbsi;
+  const allocLine = sbsi >= 65
+    ? '<strong>If you\'re just starting: consider 2–5% of your portfolio.</strong>'
+    : sbsi >= 45
+      ? '<strong>If you proceed: keep allocation under 2–3% and treat it as speculative.</strong>'
+      : '<strong>Consider waiting, or stick with diversified SSIs like MAG7.ssi instead.</strong>';
+
+  const biasLine = state.bias.adjustment >= 10
+    ? '<br><br>Your quiz answers suggest some FOMO or panic tendencies — set a hard rule for position size before you click buy.'
+    : '';
+
+  return `${t} sits in the <strong>${tier.label.toLowerCase()}</strong> band, currently ` +
+         `<strong>${mult}× more volatile than the S&amp;P500</strong>.<br><br>` +
+         `${allocLine}<br><br>Keep your S&amp;P500 index fund untouched — think of crypto as a small ` +
+         `"plus alpha" experiment, not a replacement.${biasLine}`;
+}
+
+// ---------- PWA ----------
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+  });
+}
 </script>
 
 </body>

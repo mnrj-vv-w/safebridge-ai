@@ -76,3 +76,12 @@ docker-compose.override.yml
 *.bak
 *.old
 *.save
+
+# =========================
+# Local recordings / media (not for repo)
+# =========================
+recording.webm
+*.webm
+*.mp4
+*.mov
+files.zip

@@ -21,7 +21,7 @@ Why?
 
 SafeBridge AI solves this by:
 - ✅ Comparing crypto risk **directly against S&P500**
-- ✅ Scoring safety using **institutional data (VC, ETF flows)**
+- ✅ Scoring safety using **live market data** plus **ETF flow signals from SoSoValue** (MAG7.ssi path) when available
 - ✅ Providing **plain-language AI recommendations**
 - ✅ **Guiding users to SoSoValue SSI** for safer entry
 
@@ -33,44 +33,41 @@ SafeBridge AI solves this by:
 |---|---|
 | 🔴🟡🟢 **SBSI Score** | SafeBridge Sentiment Index (0–100) adjusted for index fund investors |
 | 📊 **S&P500 Comparison** | Risk expressed as a multiple of familiar benchmarks |
-| 🔍 **Safety Layer** | VC backer verification, ETF flow analysis |
+| 🔍 **Safety Layer** | Live vs fallback data checks, optional ETF flow readout (SoSoValue), behavioral bias quiz |
 | 🤖 **AI Recommendation** | Plain-language action advice via OpenRouter |
-| 📈 **Backtest** | Historical signal accuracy vs S&P500 |
+| 📈 **Backtest (Wave 1 proxy)** | 90-day return and max drawdown from price history as quick evidence (full signal backtest planned for Wave 2) |
 | 🎯 **SSI Onboarding** | Direct guidance to **SoSoValue MAG7.ssi** |
 
 ---
 
-## 🏗 Architecture
+## 🏗 Architecture (Wave 1)
 
 ```
-User Input (Token / SSI name)
+User Input (Token / SSI name) + optional bias quiz
         ↓
 ┌─────────────────────────────────────┐
 │          Data Layer                 │
-│  • SoSoValue API (9 modules)        │
-│  • CoinGecko API                    │
+│  • CoinGecko: 90d prices (vol, DD)  │
+│  • SoSoValue: ETF list (MAG7.ssi)   │
 └──────────────┬──────────────────────┘
                ↓
 ┌─────────────────────────────────────┐
-│       Processing Layer              │
-│  Layer 1: Macro (S&P500)            │
-│  Layer 2: SBSI Score                │
-│  Layer 3: AI Action                 │
-│  Layer 4: Backtest Layer            │
-│  Layer 5: SSI Guidance              │
+│       Processing & UI               │
+│  Risk tiers (7-band) vs S&P500 vol  │
+│  SBSI score + scenario text          │
+│  Layer scorecard (safety / action / │
+│    90d backtest proxy)               │
 └──────────────┬──────────────────────┘
                ↓
 ┌─────────────────────────────────────┐
 │        OpenRouter AI                │
-│     (Claude / GPT)                  │
+│     (GPT via OpenRouter)            │
 └──────────────┬──────────────────────┘
                ↓
-          Result Page
-               ↓
-    [SoSoValue MAG7.ssi] Button
+          Result Page + SSI CTA
 ```
 
-> **Key Innovation:** Layer 4 (SSI Onboarding) directly converts user fear into SoSoValue revenue through MAG7.ssi guidance.
+> **Key Innovation:** Plain-language risk framing for index-fund investors, with a direct path to **SoSoValue SSI** (e.g. MAG7.ssi) instead of leaving users at “I’m still scared.”
 
 ---
 
@@ -92,8 +89,8 @@ User Input (Token / SSI name)
 ## 🛠 Tech Stack
 
 - **Frontend:** HTML / CSS / JavaScript (Vanilla)
-- **AI:** OpenRouter API (Claude / GPT)
-- **Data:** SoSoValue API (9 modules), CoinGecko API
+- **AI:** OpenRouter API (default: GPT; other models configurable in `api/openrouter.js`)
+- **Data:** SoSoValue API (Wave 1: ETF-related endpoint for institutional flow hint on MAG7.ssi), CoinGecko API (`market_chart` for volatility and drawdown)
 - **Deployment:** Vercel (auto-deploy via GitHub)
 - **i18n:** EN (Wave 1) / JA (Wave 2) / ZH (Wave 3)
 
@@ -125,8 +122,6 @@ OPENROUTER_API_KEY=your_openrouter_key_here
 
 ⚠️ Never commit your `.env` file.
 
-```
-
 ### 3. Run locally
 
 ```bash
@@ -141,11 +136,11 @@ Push to `main` → Vercel auto-deploys
 
 ## 🔌 API Usage
 
-| API | Endpoints Used | Purpose |
+| API | Endpoints Used (Wave 1) | Purpose |
 |---|---|---|
-| **SoSoValue** | `/currencies`, `/etfs`, `/indices` | Price, ETF flows, SSI index data |
-| **CoinGecko** | `/coins/{id}/market_chart` | S&P500 correlation analysis |
-| **OpenRouter** | `claude-3-haiku`, `gpt-3.5-turbo` | Plain-language recommendations |
+| **SoSoValue** | `GET .../v1/etf/list` (via `/api/sosovalue?endpoint=etf/list`) | Institutional flow hint for MAG7.ssi diagnosis path |
+| **CoinGecko** | `coins/{id}/market_chart` | 90-day volatility, 30d return, max drawdown vs S&P500 vol baseline |
+| **OpenRouter** | Chat completions (`openai/gpt-3.5-turbo` in code) | Plain-language recommendation text |
 
 ---
 
@@ -162,9 +157,9 @@ Push to `main` → Vercel auto-deploys
 
 | Wave | Goals |
 |---|---|
-| **Wave 1** | SBSI, SSI onboarding, live demo |
-| **Wave 2** | Real data validation, backtest, multilingual (JA) |
-| **Wave 3** | PWA, community features, global expansion (ZH) |
+| **Wave 1** | SBSI, SSI onboarding, live demo, PWA shell, SoSoValue + CoinGecko live path with fallbacks |
+| **Wave 2** | Deeper SoSoValue/SSI data, full backtest engine, multilingual (JA) |
+| **Wave 3** | Community features, global expansion (ZH) |
 
 ---
 
@@ -186,7 +181,7 @@ Apache 2.0
 
 ## 🙏 Built For
 
-**SoSoValue × AKINDO Frontier Hackathon 2026**
+**SoSoValue × AKINDO Buildathon 2026**
 
 ---
 
@@ -195,4 +190,3 @@ Apache 2.0
 - [Live Demo](https://safebridge-ai.vercel.app)
 - [SoSoValue](https://sosovalue.com)
 - [MAG7.ssi](https://sosovalue.com/indices/mag7)
-```

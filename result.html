@@ -762,7 +762,8 @@ const state = {
   snapshotSentiment: null,
   newsTotal: null,
   newsAttention: null,
-  newsCurrencyLabel: null
+  newsCurrencyLabel: null,
+  etfFlowSymbol: null
 };
 
 // ---------- ENTRY ----------
@@ -932,6 +933,7 @@ async function runDiagnosis() {
   state.newsTotal = null;
   state.newsAttention = null;
   state.newsCurrencyLabel = null;
+  state.etfFlowSymbol = null;
 
   let cgId = null;
   if (isSSI && proxy) {
@@ -1048,12 +1050,24 @@ async function runDiagnosis() {
     if (tickerUpper === 'MAG7.SSI') {
       document.getElementById('loading-text').textContent = 'Checking ETF tape…';
       state.totalCount++;
-      const etf = await fetchSoso('etfs');
+      const anchor = etfAnchorSymbolFromConstituents(state.constituents);
+      state.etfFlowSymbol = anchor;
+      const etf = await fetchSoso('etfs/summary-history', {
+        symbol: anchor,
+        country_code: 'US',
+        limit: 14
+      });
       if (etf.ok && etf.data != null) {
-        state.liveCount++;
-        state.etfFlow = extractEtfHint(etf.data);
+        const flow = extractLatestDailyNetInflow(etf.data);
+        if (flow) {
+          state.liveCount++;
+          state.etfFlow = flow;
+        } else {
+          state.errors.push('SoSoValue ETF summary-history parse failed');
+          state.etfFlow = null;
+        }
       } else {
-        state.errors.push('SoSoValue ETF list unavailable');
+        state.errors.push('SoSoValue ETF summary-history unavailable');
         state.etfFlow = null;
       }
     }
@@ -1127,26 +1141,64 @@ function volMultToScore(volMult) {
 
 function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
 
-function extractEtfHint(data) {
-  // Best-effort: recursively look for any "netInflow" / "flow" numeric fields
-  let total = 0; let found = false;
-  const walk = (node, depth = 0) => {
-    if (depth > 4 || node == null) return;
-    if (typeof node === 'object') {
-      for (const k of Object.keys(node)) {
-        const v = node[k];
-        const lower = k.toLowerCase();
-        if ((lower.includes('flow') || lower.includes('inflow')) && typeof v === 'number') {
-          total += v; found = true;
-        } else if (typeof v === 'object') {
-          walk(v, depth + 1);
-        }
-      }
-    }
+/** Map basket symbol → SoSoValue ETF summary-history `symbol` enum (docs). */
+function etfAnchorSymbolFromConstituents(rows) {
+  const raw = rows?.[0]?.symbol;
+  const u = raw ? String(raw).toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+  const aliases = {
+    BITCOIN: 'BTC',
+    BTC: 'BTC',
+    ETHEREUM: 'ETH',
+    ETH: 'ETH',
+    SOLANA: 'SOL',
+    SOL: 'SOL',
+    DOGECOIN: 'DOGE',
+    DOGE: 'DOGE',
+    XRP: 'XRP',
+    RIPPLE: 'XRP',
+    BINANCECOIN: 'BNB',
+    BNB: 'BNB',
+    CARDANO: 'ADA',
+    ADA: 'ADA',
+    AVALANCHE: 'AVAX',
+    AVAX: 'AVAX',
+    CHAINLINK: 'LINK',
+    LINK: 'LINK',
+    POLKADOT: 'DOT',
+    DOT: 'DOT',
+    LITECOIN: 'LTC',
+    LTC: 'LTC',
+    HEDERA: 'HBAR',
+    HBAR: 'HBAR'
   };
-  walk(data);
-  if (!found) return null;
-  return { total, positive: total > 0 };
+  if (u && aliases[u]) return aliases[u];
+  if (u && u.length <= 6) return u;
+  return 'BTC';
+}
+
+function formatUsdCompact(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '—';
+  const abs = Math.abs(v);
+  const sign = v < 0 ? '-' : '';
+  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(1)}M`;
+  if (abs >= 1e3) return `${sign}$${(abs / 1e3).toFixed(0)}K`;
+  return `${sign}$${abs.toFixed(0)}`;
+}
+
+/** Latest row first (docs); `total_net_inflow` USD aggregate for US-listed ETFs. */
+function extractLatestDailyNetInflow(data) {
+  const rows = Array.isArray(data) ? data : (data && Array.isArray(data.list) ? data.list : []);
+  const row = rows[0];
+  if (!row || typeof row !== 'object') return null;
+  const n = coerceFiniteNumber(row.total_net_inflow);
+  if (n == null) return null;
+  return {
+    total: n,
+    positive: n > 0,
+    sessionDate: typeof row.date === 'string' ? row.date : null
+  };
 }
 
 // ---------- RENDER ----------
@@ -1241,7 +1293,11 @@ function renderAll() {
     const positive = state.etfFlow.positive;
     document.getElementById('d-etf').textContent = positive ? 'Net Inflow' : 'Net Outflow';
     document.getElementById('d-etf').style.color = positive ? '#059669' : '#DC2626';
-    document.getElementById('d-etf-sub').textContent = `Aggregated SoSoValue ETF feed`;
+    const sym = state.etfFlowSymbol || 'BTC';
+    const amt = formatUsdCompact(state.etfFlow.total);
+    const sess = state.etfFlow.sessionDate ? ` · ${state.etfFlow.sessionDate}` : '';
+    document.getElementById('d-etf-sub').textContent =
+      `${sym}/US ETFs · latest total_net_inflow ${amt}${sess}`;
   } else if (state.ticker.toUpperCase() === 'MAG7.SSI') {
     document.getElementById('d-etf').textContent = 'Live unavailable';
     document.getElementById('d-etf').style.color = '#9CA3AF';

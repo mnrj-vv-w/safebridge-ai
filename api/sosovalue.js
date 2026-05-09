@@ -8,7 +8,7 @@
  *   GET /api/sosovalue?endpoint=indices
  *   GET /api/sosovalue?endpoint=indices%2Fssimag7%2Fconstituents
  *   GET /api/sosovalue?endpoint=news&currency_id=...&page=1&page_size=20
- *   GET /api/sosovalue?endpoint=etfs
+ *   GET /api/sosovalue?endpoint=etfs%2Fsummary-history&symbol=BTC&country_code=US
  */
 
 export default async function handler(req, res) {

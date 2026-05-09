@@ -2,7 +2,7 @@
 
 ## Converting Fear into On-chain Action
 
-> Bridging **70+ million S&P500 investors worldwide** to crypto through **SoSoValue SSI**
+> Bridging **tens of millions of S&P500 index-fund investors worldwide** (estimate) to crypto through **SoSoValue SSI**
 
 🔗 **Live Demo**: [safebridge-ai.vercel.app](https://safebridge-ai.vercel.app)
 
@@ -10,14 +10,16 @@
 
 ## 🎯 The Problem
 
-**70+ million investors globally hold S&P500 index funds.**
+**Tens of millions of investors globally hold S&P500 index funds.**
 
-**But less than 5% own crypto.**
+**But only a small minority of them also own crypto.**
 
-Why?
-- Scared (68%)
-- Don't understand (52%)
-- Fear of losing money (47%)
+Why retail index-fund investors hesitate (recurring themes from public investor sentiment surveys):
+- It feels too risky / scary
+- It's hard to understand
+- Fear of losing money
+
+SafeBridge AI is built around exactly these three barriers.
 
 SafeBridge AI solves this by:
 - ✅ Comparing crypto risk **directly against S&P500**
@@ -73,11 +75,11 @@ User Input (Token / SSI name) + optional bias quiz
 
 ## 📊 Impact
 
-### Market Size
-- **Global target:** 70+ million S&P500 index fund investors
+### Market Size (estimates, Wave 1)
+- **Global target:** Tens of millions of S&P500 index-fund investors worldwide (estimate based on public ETF / index-fund participation data)
 - **Initial focus:** Asia-Pacific retail investors
-- **Potential SSI buyers:** 3.5 million (5% conversion rate)
-- **Competitor target:** 50,000 pro traders globally
+- **Potential SSI buyers:** Order-of-magnitude estimate in the low millions, assuming a single-digit-percent conversion of the addressable index-fund audience
+- **Typical competitor target:** Pro / active crypto traders (a much smaller, already-converted audience), vs. SafeBridge AI which targets the much larger index-fund crowd
 
 ### Contribution to SoSoValue
 - **Direct SSI onboarding** driving revenue
@@ -168,8 +170,10 @@ Push to `main` → Vercel auto-deploys
 | Other Teams | SafeBridge |
 |---|---|
 | Tech & features | **Market size × SoSoValue contribution** |
-| 50K traders | **70M+ investors globally** |
+| Pro / active crypto traders (already converted) | **Index-fund investors worldwide (much larger, untapped pool)** |
 | Indirect SSI | **Direct SSI onboarding** |
+
+> Audience-size figures above are order-of-magnitude estimates intended to frame the opportunity, not precise market research.
 
 ---
 

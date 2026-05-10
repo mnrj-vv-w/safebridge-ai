@@ -13,6 +13,7 @@
 - Confirm the loading-stage **Diagnosis pipeline** shows real API steps (`✓ / ⚠ / ✗`, timing).
 - On results, check the **S&P500-framed risk signal + SBSI + clear SSI CTA**.
 - If one API is unstable, verify the app still finishes via graceful fallback.
+- Check the **Quick Decision** block: it is computed from volatility, bias quiz adjustment, and live-data quality status (`Live/Partial/Fallback`), not a static sentence.
 
 ---
 

@@ -7,7 +7,6 @@
   <meta name="theme-color" content="#185FA5">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
-  <style>body{visibility:hidden}</style>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -453,7 +452,7 @@
     .loading-overlay.hidden { display: none; }
     .loading-log {
       margin-top: 18px;
-      max-width: 420px;
+      max-width: 460px;
       max-height: 42vh;
       overflow-y: auto;
       text-align: left;
@@ -469,7 +468,44 @@
       letter-spacing: 0.06em;
       margin-bottom: 8px;
     }
-    .loading-log-line { margin-bottom: 4px; word-break: break-word; }
+    .loading-log-line {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 5px;
+      word-break: break-word;
+      opacity: 0;
+      transform: translateY(2px);
+      animation: logLineFadeIn 240ms ease-out forwards;
+    }
+    @keyframes logLineFadeIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .log-icon {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      border-radius: 50%;
+    }
+    .log-icon-ok { color: #047857; background: #D1FAE5; }
+    .log-icon-warn { color: #B45309; background: #FEF3C7; }
+    .log-icon-fail { color: #B91C1C; background: #FEE2E2; }
+    .log-msg { flex: 1 1 auto; }
+    .log-ms {
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+      font-size: 10px;
+      color: #9CA3AF;
+      background: #F3F4F6;
+      padding: 1px 6px;
+      border-radius: 6px;
+    }
 
     /* SOSO INDEX */
     .soso-index-card { margin-bottom: 12px; }
@@ -551,76 +587,6 @@
   </style>
 </head>
 <body>
-
-<script>
-(() => {
-  const ENABLE_GUARD = false;
-  const PASS = "safebridge";
-
-  if (!ENABLE_GUARD) {
-    document.body.style.visibility = "visible";
-    return;
-  }
-
-  try {
-    const qs = new URLSearchParams(location.search);
-    const key = qs.get("key");
-
-    if (localStorage.getItem("sb_ok") === "1") {
-      document.body.style.visibility = "visible";
-      return;
-    }
-
-    if (key && key === PASS) {
-      localStorage.setItem("sb_ok", "1");
-      qs.delete("key");
-      const newQs = qs.toString();
-      history.replaceState({}, "", location.pathname + (newQs ? `?${newQs}` : ""));
-      document.body.style.visibility = "visible";
-      return;
-    }
-
-    document.body.innerHTML = `
-      <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F5F7FA;color:#111827;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:80px 18px;">
-        <div style="width:100%;max-width:520px;background:#fff;border:1px solid #E8ECF0;border-radius:16px;padding:18px;">
-          <div style="font-size:18px;font-weight:700;margin-bottom:8px;">Private</div>
-          <div style="font-size:13px;color:#6B7280;line-height:1.7;margin-bottom:12px;">合言葉を入力してください。</div>
-          <input id="sb-pass" type="password" autocomplete="current-password" placeholder="Passphrase"
-            style="width:100%;padding:12px 14px;font-size:15px;border-radius:12px;border:1.5px solid #E8ECF0;outline:none;" />
-          <button id="sb-ok"
-            style="margin-top:12px;width:100%;padding:12px 14px;font-size:15px;border-radius:12px;border:none;background:#185FA5;color:#fff;font-weight:600;cursor:pointer;">OK</button>
-          <div id="sb-err" style="margin-top:10px;color:#B91C1C;font-size:12px;min-height:16px;"></div>
-          <div style="margin-top:10px;font-size:11px;color:#9CA3AF;">URLに <span style="background:#F3F4F6;padding:1px 6px;border-radius:6px;">?key=...</span> を付けても入れます。</div>
-        </div>
-      </div>
-    `;
-
-    const input = document.getElementById("sb-pass");
-    const err = document.getElementById("sb-err");
-    const btn = document.getElementById("sb-ok");
-
-    input?.focus();
-
-    const submit = () => {
-      if ((input?.value || "") === PASS) {
-        localStorage.setItem("sb_ok", "1");
-        location.reload();
-      } else if (err) {
-        err.textContent = "違います";
-      }
-    };
-
-    btn?.addEventListener("click", submit);
-    input?.addEventListener("keydown", (ev) => {
-      if (ev.key === "Enter") submit();
-    });
-
-    document.body.style.visibility = "visible";
-  } catch {
-    document.body.style.visibility = "visible";
-  }
-})();
-</script>
 
 <div class="loading-overlay" id="loading">
   <div class="spinner"></div>
@@ -1118,15 +1084,45 @@ function clearAgentLog() {
   if (el) el.innerHTML = '';
 }
 
-/** Minimal “agentic” trace during loading (✓ / ⚠). */
-function agentLogLine(ok, message) {
+/**
+ * Agentic trace during loading.
+ * status: 'ok' | 'warn' | 'fail'  (legacy: true→'ok', false→'warn')
+ * durationMs: optional number; rendered as a right-aligned pill (e.g. "412 ms")
+ */
+function agentLogLine(status, message, durationMs) {
   const wrap = document.getElementById('loading-log');
   if (!wrap) return;
+  let normalized;
+  if (status === true || status === 'ok') normalized = 'ok';
+  else if (status === 'fail') normalized = 'fail';
+  else normalized = 'warn';
+  const iconChar = normalized === 'ok' ? '✓' : normalized === 'fail' ? '✗' : '⚠';
   const row = document.createElement('div');
   row.className = 'loading-log-line';
-  row.style.color = ok ? '#047857' : '#B45309';
-  row.textContent = (ok ? '✓ ' : '⚠ ') + message;
+  const icon = document.createElement('span');
+  icon.className = `log-icon log-icon-${normalized}`;
+  icon.textContent = iconChar;
+  const msg = document.createElement('span');
+  msg.className = 'log-msg';
+  msg.textContent = message;
+  row.appendChild(icon);
+  row.appendChild(msg);
+  if (typeof durationMs === 'number' && Number.isFinite(durationMs) && durationMs >= 0) {
+    const ms = document.createElement('span');
+    ms.className = 'log-ms';
+    ms.textContent = `${Math.round(durationMs)} ms`;
+    row.appendChild(ms);
+  }
   wrap.appendChild(row);
+}
+
+/** Returns a stop() that logs status + message + measured ms. */
+function startAgentStep() {
+  const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  return function stop(status, message) {
+    const t1 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    agentLogLine(status, message, t1 - t0);
+  };
 }
 
 function attentionFromNewsList(list) {
@@ -1182,6 +1178,7 @@ async function runDiagnosis() {
 
   // 1) Market chart from CoinGecko
   state.totalCount++;
+  let stepDone = startAgentStep();
   const market = await safeFetchJson(
     `/api/coingecko?endpoint=${encodeURIComponent('coins/' + cgId + '/market_chart')}&vs_currency=usd&days=90`
   );
@@ -1192,13 +1189,13 @@ async function runDiagnosis() {
     state.volMult = stats.annualVol / SP500_ANNUAL_VOL;
     state.ret30 = stats.return30d;
     state.drawdown = stats.maxDrawdown;
-    agentLogLine(true, `Volatility & drawdown — CoinGecko (${cgId}, 90d)`);
+    stepDone('ok', `Volatility & drawdown — CoinGecko (${cgId}, 90d)`);
   } else {
     state.errors.push('CoinGecko market_chart unavailable');
     state.volMult = isSSI ? (tickerUpper === 'MEME.SSI' ? 5.5 : tickerUpper === 'DEFI.SSI' ? 4.5 : 3.6)
                           : 4.0;
     state.vol = state.volMult * SP500_ANNUAL_VOL;
-    agentLogLine(false, 'Volatility — CoinGecko unavailable (using fallback)');
+    stepDone('warn', 'Volatility — CoinGecko unavailable (using fallback)');
   }
 
   // 2) SoSoValue: indices list + constituents + snapshot + news (+ ETFs for MAG7)
@@ -1206,6 +1203,7 @@ async function runDiagnosis() {
     document.getElementById('loading-text').textContent = 'Loading SoSoValue index data…';
 
     state.totalCount++;
+    stepDone = startAgentStep();
     const listRes = await fetchSoso('indices');
     let ix = null;
     if (listRes.ok && listRes.data != null) {
@@ -1215,12 +1213,13 @@ async function runDiagnosis() {
     } else {
       state.errors.push('SoSoValue indices list unavailable');
     }
-    agentLogLine(!!ix, ix ? `SSI index id — SoSoValue (${ix})` : 'SSI index id — could not map ticker');
+    stepDone(ix ? 'ok' : 'fail', ix ? `SSI index id — SoSoValue (${ix})` : 'SSI index id — could not map ticker');
 
     if (ix) {
       state.ssiIndexTicker = ix;
 
       state.totalCount++;
+      stepDone = startAgentStep();
       const consRes = await fetchSoso(`indices/${ix}/constituents`);
       let sorted = [];
       if (consRes.ok) {
@@ -1235,7 +1234,7 @@ async function runDiagnosis() {
       } else {
         state.errors.push('SoSoValue constituents unavailable');
       }
-      agentLogLine(sorted.length > 0, sorted.length ? `Basket constituents — ${sorted.length} assets (SoSoValue)` : 'Basket constituents — empty or failed');
+      stepDone(sorted.length > 0 ? 'ok' : 'fail', sorted.length ? `Basket constituents — ${sorted.length} assets (SoSoValue)` : 'Basket constituents — empty or failed');
 
       const top = sorted[0];
       const currencyId = top?.currency_id;
@@ -1251,6 +1250,7 @@ async function runDiagnosis() {
       };
       if (currencyId) newsQuery.currency_id = currencyId;
 
+      stepDone = startAgentStep();
       const [snapRes, newsRes] = await Promise.all([
         fetchSoso(`indices/${ix}/market-snapshot`),
         fetchSoso('news', newsQuery)
@@ -1279,7 +1279,8 @@ async function runDiagnosis() {
       }
       const snapOk = snapRes.ok && snapRes.data && typeof snapRes.data === 'object';
       const newsOk = newsRes.ok && newsRes.data && typeof newsRes.data === 'object';
-      agentLogLine(snapOk || newsOk, `Market snapshot & news — SoSoValue (${snapOk && newsOk ? 'both' : snapOk ? 'snapshot only' : newsOk ? 'news only' : 'partial fail'})`);
+      const snapNewsStatus = (snapOk && newsOk) ? 'ok' : (snapOk || newsOk) ? 'warn' : 'fail';
+      stepDone(snapNewsStatus, `Market snapshot & news — SoSoValue (${snapOk && newsOk ? 'both' : snapOk ? 'snapshot only' : newsOk ? 'news only' : 'partial fail'})`);
     }
 
     if (tickerUpper === 'MAG7.SSI') {
@@ -1287,6 +1288,7 @@ async function runDiagnosis() {
       state.totalCount++;
       const anchor = etfAnchorSymbolFromConstituents(state.constituents);
       state.etfFlowSymbol = anchor;
+      stepDone = startAgentStep();
       const etf = await fetchSoso('etfs/summary-history', {
         symbol: anchor,
         country_code: 'US',
@@ -1297,23 +1299,24 @@ async function runDiagnosis() {
         if (flow) {
           state.liveCount++;
           state.etfFlow = flow;
-          agentLogLine(true, `US ETF flow aggregate — ${anchor}/US (latest session)`);
+          stepDone('ok', `US ETF flow aggregate — ${anchor}/US (latest session)`);
         } else {
           state.errors.push('SoSoValue ETF summary-history parse failed');
           state.etfFlow = null;
-          agentLogLine(false, 'US ETF flow — response OK but parse failed');
+          stepDone('warn', 'US ETF flow — response OK but parse failed');
         }
       } else {
         state.errors.push('SoSoValue ETF summary-history unavailable');
         state.etfFlow = null;
-        agentLogLine(false, 'US ETF flow — SoSoValue unavailable');
+        stepDone('fail', 'US ETF flow — SoSoValue unavailable');
       }
     } else {
-      agentLogLine(true, 'US ETF flow — skipped (MAG7.ssi only)');
+      agentLogLine('ok', 'US ETF flow — skipped (MAG7.ssi only)');
     }
   }
 
   // Risk score
+  stepDone = startAgentStep();
   const baseScore = volMultToScore(state.volMult);
   const adjusted = clamp(baseScore + state.bias.adjustment, 0, 100);
   state.riskScore = Math.round(adjusted);
@@ -1330,8 +1333,8 @@ async function runDiagnosis() {
 
   state.fetchedAt = new Date();
   const biasNote = state.bias.adjustment ? ` (quiz +${state.bias.adjustment})` : '';
-  agentLogLine(true, `Risk score & SBSI — computed${biasNote}`);
-  agentLogLine(true, 'AI summary — queued (runs after load)');
+  stepDone('ok', `Risk score & SBSI — computed${biasNote}`);
+  agentLogLine('ok', 'AI summary — queued (runs after load)');
 }
 
 async function safeFetchJson(url) {
@@ -1909,14 +1912,41 @@ function templateAdvice(tier) {
       ? '<strong>If you proceed: keep allocation under 2–3% and treat it as speculative.</strong>'
       : '<strong>Consider waiting, or stick with diversified SSIs like MAG7.ssi instead.</strong>';
 
+  const ss = state.snapshotSentiment;
+  let momentumLine = '';
+  if (ss && Number.isFinite(ss.pct24h)) {
+    const dir = ss.pct24h > 0 ? 'up' : ss.pct24h < 0 ? 'down' : 'flat';
+    const pctTxt = `${ss.pct24h > 0 ? '+' : ''}${ss.pct24h.toFixed(2)}%`;
+    momentumLine = `Right now the SoSoValue snapshot shows the index <strong>${dir} ${pctTxt}</strong> in the last 24h (<em>${ss.label.toLowerCase()}</em>).`;
+  }
+
+  let newsLine = '';
+  const hasNewsTotal = state.newsTotal != null;
+  const hasAttention = state.newsAttention != null;
+  if (hasNewsTotal || hasAttention) {
+    const parts = [];
+    if (hasNewsTotal) parts.push(`<strong>${state.newsTotal}</strong> recent headlines`);
+    if (hasAttention) parts.push(`attention <strong>${state.newsAttention}/100</strong>`);
+    newsLine = `News feed: ${parts.join(' · ')}.`;
+  }
+
+  let etfLine = '';
+  if (state.etfFlow) {
+    const tone = state.etfFlow.positive ? 'net inflows' : 'net outflows';
+    etfLine = `US ETFs are showing <strong>${tone}</strong> for the basket anchor this session.`;
+  }
+
   const biasLine = state.bias.adjustment >= 10
     ? '<br><br>Your quiz answers suggest some FOMO or panic tendencies — set a hard rule for position size before you click buy.'
     : '';
 
+  const contextSentences = [momentumLine, newsLine, etfLine].filter(Boolean).join(' ');
+  const contextBlock = contextSentences ? `${contextSentences}<br><br>` : '';
+
   return `${t} sits in the <strong>${tier.label.toLowerCase()}</strong> band, currently ` +
          `<strong>${mult}× more volatile than the S&amp;P500</strong>.<br><br>` +
-         `${allocLine}<br><br>Keep your S&amp;P500 index fund untouched — think of crypto as a small ` +
-         `"plus alpha" experiment, not a replacement.${biasLine}`;
+         `${contextBlock}${allocLine}<br><br>Keep your S&amp;P500 index fund running as the core — ` +
+         `think of crypto as a small "plus alpha" experiment, not a replacement.${biasLine}`;
 }
 
 // ---------- PWA ----------

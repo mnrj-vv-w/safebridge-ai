@@ -8,6 +8,12 @@
 🎬 **Demo Video (3 min, EN)**: _link added on submission (Day 3)_
 📋 **API Usage Plan**: [`docs/api_usage_plan.md`](docs/api_usage_plan.md)
 
+### For Judges (60-second path)
+- Open the live demo and run `MAG7.ssi` first.
+- Confirm the loading-stage **Diagnosis pipeline** shows real API steps (`✓ / ⚠ / ✗`, timing).
+- On results, check the **S&P500-framed risk signal + SBSI + clear SSI CTA**.
+- If one API is unstable, verify the app still finishes via graceful fallback.
+
 ---
 
 ## 🎯 The Problem
@@ -203,6 +209,7 @@ Aligned with the official SoSoValue × AKINDO Buildathon 2026 Wave focus stateme
 - ✅ Graceful degradation on every external dependency (`Full live` / `Partial` / `Fallback` pill)
 - ✅ PWA shell (manifest + service worker) for static-shell offline reload
 - ✅ [`docs/api_usage_plan.md`](docs/api_usage_plan.md) covering all current + planned endpoints
+- ✅ **Lightweight UX impact pack** (keep Wave1 as early prototype): quiz time expectation, clearer selection state, minimum readability floor, and a quick decision summary strip on the result first-view
 
 ### Wave 2 — Build Phase I *(May 18 – May 29)*
 *Official Focus: core feature development, SoSoValue API integration, **initial SoDEX API or execution module integration**, interactive prototype.*
@@ -213,6 +220,7 @@ Aligned with the official SoSoValue × AKINDO Buildathon 2026 Wave focus stateme
 - 🔲 Full per-signal historical backtest engine replacing the Wave 1 90-day proxy
 - 🔲 Multilingual UI (JA) on top of the existing EN baseline
 - 🔲 Data-driven SSI ↔ anchor-coin mapping (remove the hardcoded list)
+- 🔲 **UX measurement phase**: core analytics instrumentation + CTA color A/B test (`result_view → cta_click_sosovalue`)
 
 ### Wave 3 — Build Phase II *(Jun 4 – Jun 15)*
 *Official Focus: risk control, confirmation mechanism, security awareness, polished demo.*
@@ -222,6 +230,9 @@ Aligned with the official SoSoValue × AKINDO Buildathon 2026 Wave focus stateme
 - 🔲 **Security awareness** module: explicit checklist (no wallet / no key custody / read-only sources)
 - 🔲 Multilingual UI (ZH)
 - 🔲 Polished demo + Demo Day storyline
+- 🔲 **Major UX restructuring**: result first-view redesign (conclusion-first hierarchy) based on Wave2 measurement
+
+> UX planning docs: [`docs/設計書/UI/README.md`](docs/設計書/UI/README.md), [`docs/設計書/UI/ux_wireframe_v1.md`](docs/設計書/UI/ux_wireframe_v1.md), [`docs/設計書/UI/analytics_event_dictionary_v1.md`](docs/設計書/UI/analytics_event_dictionary_v1.md), [`docs/設計書/UI/event_payload_template_v1.md`](docs/設計書/UI/event_payload_template_v1.md)
 
 ---
 

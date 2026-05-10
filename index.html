@@ -81,11 +81,27 @@
     .help-btn {
       width: 18px; height: 18px; border-radius: 50%;
       background: #F3F4F6; border: 1px solid #D1D5DB;
-      font-size: 11px; color: #6B7280;
+      font-size: 12px; color: #6B7280;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; flex-shrink: 0;
     }
     .help-btn:hover { background: #DBEAFE; color: #185FA5; }
+    .ssi-check {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #185FA5;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .ssi-btn.selected .ssi-check {
+      display: inline-flex;
+    }
 
     /* CUSTOM INPUT */
     .custom-wrap {
@@ -162,9 +178,15 @@
     /* HINTS */
     .hint { font-size: 12px; color: #9CA3AF; margin-bottom: 6px; }
     .disclaimer {
-      font-size: 11px; color: #9CA3AF;
+      font-size: 12px; color: #9CA3AF;
       line-height: 1.6;
       padding: 0 8px;
+    }
+    .quiz-time {
+      font-size: 12px;
+      color: #6B7280;
+      margin-top: -6px;
+      margin-bottom: 12px;
     }
     .no-wallet {
       font-size: 12px; color: #059669;
@@ -288,20 +310,24 @@
       <div class="ssi-dot" style="background:#2563EB;"></div>
       <span class="ssi-label">MAG7.ssi</span>
       <div class="help-btn" onclick="event.stopPropagation();showModal('mag7')">?</div>
+      <span class="ssi-check" aria-hidden="true">✓</span>
     </div>
     <div class="ssi-btn" onclick="selectSSI(this,'MEME.ssi')">
       <div class="ssi-dot" style="background:#DC2626;"></div>
       <span class="ssi-label">MEME.ssi</span>
       <div class="help-btn" onclick="event.stopPropagation();showModal('meme')">?</div>
+      <span class="ssi-check" aria-hidden="true">✓</span>
     </div>
     <div class="ssi-btn" onclick="selectSSI(this,'DEFI.ssi')">
       <div class="ssi-dot" style="background:#059669;"></div>
       <span class="ssi-label">DEFI.ssi</span>
       <div class="help-btn" onclick="event.stopPropagation();showModal('defi')">?</div>
+      <span class="ssi-check" aria-hidden="true">✓</span>
     </div>
     <div class="ssi-btn" onclick="selectSSI(this,'custom')">
       <div class="ssi-dot" style="background:#D1D5DB;"></div>
       <span class="ssi-label">Enter manually</span>
+      <span class="ssi-check" aria-hidden="true">✓</span>
     </div>
   </div>
 
@@ -318,6 +344,7 @@
   </div>
 
   <button class="primary-btn" onclick="goQuiz()">Continue →</button>
+  <p class="quiz-time">Optional bias quiz: about 30 seconds.</p>
 
   <p class="hint">Free · No signup required · Powered by SoSoValue API</p>
   <p class="disclaimer">

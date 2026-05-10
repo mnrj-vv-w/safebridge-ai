@@ -59,7 +59,7 @@
     }
     .ticker-sub { font-size: 13px; color: #6B7280; }
     .live-pill {
-      font-size: 11px; padding: 3px 10px;
+      font-size: 12px; padding: 3px 10px;
       border-radius: 20px;
       background: #ECFDF5; color: #047857;
       display: inline-flex; align-items: center; gap: 4px;
@@ -78,6 +78,36 @@
       padding: 18px 20px;
       border: 1px solid #E8ECF0;
       margin-bottom: 12px;
+    }
+    .quick-card {
+      background: #F8FAFC;
+      border: 1px solid #DBEAFE;
+    }
+    .quick-title {
+      font-size: 12px;
+      color: #185FA5;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .quick-action {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1A1A2E;
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+    .quick-alloc {
+      font-size: 13px;
+      color: #374151;
+      margin-bottom: 10px;
+    }
+    .quick-reason {
+      font-size: 12px;
+      color: #6B7280;
+      line-height: 1.6;
+      margin-bottom: 3px;
     }
     .section-label {
       font-size: 12px; color: #9CA3AF;
@@ -227,7 +257,7 @@
     }
     .detail-title { font-size: 12px; color: #9CA3AF; margin-bottom: 6px; }
     .detail-val { font-size: 15px; font-weight: 600; }
-    .detail-sub { font-size: 11px; color: #9CA3AF; margin-top: 3px; }
+    .detail-sub { font-size: 12px; color: #9CA3AF; margin-top: 3px; }
     .detail-note {
       font-size: 10px;
       color: #9CA3AF;
@@ -235,7 +265,7 @@
       line-height: 1.55;
     }
     .detail-lede {
-      font-size: 11px;
+      font-size: 12px;
       color: #9CA3AF;
       margin-top: 6px;
       line-height: 1.5;
@@ -251,7 +281,7 @@
     .etf-info-btn {
       margin-top: 8px;
       padding: 4px 0;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 500;
       color: #185FA5;
       background: none;
@@ -289,7 +319,7 @@
     .etf-popover[hidden] {
       display: none !important;
     }
-    .detail-source { font-size: 10px; color: #D1D5DB; margin-top: 8px; }
+    .detail-source { font-size: 11px; color: #D1D5DB; margin-top: 8px; }
 
     /* LAYER SCORECARD */
     .layer-grid {
@@ -608,6 +638,15 @@
     <span class="ticker-badge" id="ticker-badge">MAG7.ssi</span>
     <span class="ticker-sub">Risk Analysis Result</span>
     <span class="live-pill" id="live-pill"><span class="dot"></span><span id="live-pill-text">Live data</span></span>
+  </div>
+
+  <div class="card quick-card">
+    <div class="quick-title">Quick Decision</div>
+    <div class="quick-action" id="quick-action">Preparing recommendation…</div>
+    <div class="quick-alloc" id="quick-alloc">Sizing guide will appear after calculation.</div>
+    <div class="quick-reason" id="quick-r1">- Volatility context loading…</div>
+    <div class="quick-reason" id="quick-r2">- Behavioral adjustment loading…</div>
+    <div class="quick-reason" id="quick-r3">- Data quality status loading…</div>
   </div>
 
   <div class="transparency-card page-help-card">
@@ -1524,6 +1563,7 @@ function renderAll() {
 
   // 7-tier signal
   const tier = TIERS.find(t => state.riskScore <= t.max) || TIERS[TIERS.length - 1];
+  renderQuickDecision(tier);
   document.getElementById('signal-dot').style.background = tier.color;
   document.getElementById('signal-label').textContent = tier.label;
   document.getElementById('signal-label').style.color = tier.color;
@@ -1768,6 +1808,28 @@ function renderLayerScorecard() {
   l4Badge.textContent = bt.badge;
   l4Value.textContent = bt.title;
   l4Note.textContent = bt.note;
+}
+
+function renderQuickDecision(tier) {
+  const action = getActionGuidance();
+  const dataState = state.totalCount > 0 && state.liveCount === state.totalCount
+    ? 'Live'
+    : state.liveCount > 0
+      ? 'Partial'
+      : 'Fallback';
+  let alloc = 'Suggested sizing: keep crypto as a satellite allocation.';
+  if (state.riskScore >= 80) alloc = 'Suggested sizing: 0-1% (or wait for calmer conditions).';
+  else if (state.riskScore >= 60) alloc = 'Suggested sizing: 1-3% with staged entry.';
+  else alloc = 'Suggested sizing: 2-5% max with strict limits.';
+
+  document.getElementById('quick-action').textContent = action.title;
+  document.getElementById('quick-alloc').textContent = alloc;
+  document.getElementById('quick-r1').textContent =
+    `- Volatility: ${state.volMult ? `${state.volMult.toFixed(1)}x vs S&P500` : tier.sub}.`;
+  document.getElementById('quick-r2').textContent =
+    `- Behavior: quiz adjustment +${state.bias.adjustment} (${state.bias.tags?.[0] || 'neutral'}).`;
+  document.getElementById('quick-r3').textContent =
+    `- Data quality: ${dataState} (${state.liveCount}/${state.totalCount} live sources).`;
 }
 
 function getActionGuidance() {

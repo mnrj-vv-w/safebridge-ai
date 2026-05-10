@@ -86,8 +86,23 @@
       cursor: pointer; flex-shrink: 0;
     }
     .help-btn:hover { background: #DBEAFE; color: #185FA5; }
+    .ssi-actions {
+      width: 44px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .help-slot {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
     .ssi-check {
-      display: none;
       width: 18px;
       height: 18px;
       border-radius: 50%;
@@ -95,12 +110,16 @@
       color: #fff;
       font-size: 12px;
       font-weight: 700;
-      align-items: center;
-      justify-content: center;
+      display: inline-flex;
+      align-items: center; justify-content: center;
       flex-shrink: 0;
+      opacity: 0;
+      transform: scale(0.9);
+      transition: opacity 0.14s ease, transform 0.14s ease;
     }
     .ssi-btn.selected .ssi-check {
-      display: inline-flex;
+      opacity: 1;
+      transform: scale(1);
     }
 
     /* CUSTOM INPUT */
@@ -309,25 +328,40 @@
     <div class="ssi-btn selected" onclick="selectSSI(this,'MAG7.ssi')">
       <div class="ssi-dot" style="background:#2563EB;"></div>
       <span class="ssi-label">MAG7.ssi</span>
-      <div class="help-btn" onclick="event.stopPropagation();showModal('mag7')">?</div>
-      <span class="ssi-check" aria-hidden="true">✓</span>
+      <span class="ssi-actions">
+        <span class="help-slot">
+          <div class="help-btn" onclick="event.stopPropagation();showModal('mag7')">?</div>
+        </span>
+        <span class="ssi-check" aria-hidden="true">✓</span>
+      </span>
     </div>
     <div class="ssi-btn" onclick="selectSSI(this,'MEME.ssi')">
       <div class="ssi-dot" style="background:#DC2626;"></div>
       <span class="ssi-label">MEME.ssi</span>
-      <div class="help-btn" onclick="event.stopPropagation();showModal('meme')">?</div>
-      <span class="ssi-check" aria-hidden="true">✓</span>
+      <span class="ssi-actions">
+        <span class="help-slot">
+          <div class="help-btn" onclick="event.stopPropagation();showModal('meme')">?</div>
+        </span>
+        <span class="ssi-check" aria-hidden="true">✓</span>
+      </span>
     </div>
     <div class="ssi-btn" onclick="selectSSI(this,'DEFI.ssi')">
       <div class="ssi-dot" style="background:#059669;"></div>
       <span class="ssi-label">DEFI.ssi</span>
-      <div class="help-btn" onclick="event.stopPropagation();showModal('defi')">?</div>
-      <span class="ssi-check" aria-hidden="true">✓</span>
+      <span class="ssi-actions">
+        <span class="help-slot">
+          <div class="help-btn" onclick="event.stopPropagation();showModal('defi')">?</div>
+        </span>
+        <span class="ssi-check" aria-hidden="true">✓</span>
+      </span>
     </div>
     <div class="ssi-btn" onclick="selectSSI(this,'custom')">
       <div class="ssi-dot" style="background:#D1D5DB;"></div>
       <span class="ssi-label">Enter manually</span>
-      <span class="ssi-check" aria-hidden="true">✓</span>
+      <span class="ssi-actions">
+        <span class="help-slot" aria-hidden="true"></span>
+        <span class="ssi-check" aria-hidden="true">✓</span>
+      </span>
     </div>
   </div>
 

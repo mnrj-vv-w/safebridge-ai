@@ -52,6 +52,80 @@
       line-height: 1.7;
       margin-bottom: 40px;
     }
+    .hero .hero-lead {
+      margin-bottom: 18px;
+    }
+
+    /* HERO — illustrative compare (static, no API) */
+    .hero-compare-static {
+      background: #fff;
+      border: 1px solid #E8ECF0;
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 28px;
+      text-align: left;
+    }
+    .hero-compare-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #185FA5;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    .hero-compare-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin: 0 0 12px;
+      line-height: 1.4;
+    }
+    .hero-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .hero-bar-row {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      align-items: center;
+      gap: 10px;
+    }
+    .hero-bar-label {
+      font-size: 12px;
+      color: #6B7280;
+      font-weight: 500;
+    }
+    .hero-bar-track {
+      height: 10px;
+      background: #E8ECF0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .hero-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+    }
+    .hero-bar-fill.hero-bar-sp500 {
+      width: 42%;
+      background: linear-gradient(90deg, #64748B, #94A3B8);
+    }
+    .hero-bar-fill.hero-bar-mag7 {
+      width: 84%;
+      background: linear-gradient(90deg, #185FA5, #3B82F6);
+    }
+    .hero .hero-compare-note {
+      font-size: 11px;
+      color: #9CA3AF;
+      line-height: 1.5;
+      margin-bottom: 0;
+    }
 
     /* SSI BUTTONS */
     .ssi-grid {
@@ -347,9 +421,25 @@
 <!-- STEP 1: SSI SELECTION -->
 <div class="hero" id="screen-select">
   <h1>Compare Crypto with S&amp;P500</h1>
-  <p>For investors who know index funds.<br>
+  <p class="hero-lead">For investors who know index funds.<br>
   Select a crypto index and get an instant risk diagnosis<br>
   compared to your familiar S&amp;P500.</p>
+
+  <div class="hero-compare-static" aria-label="Illustrative comparison">
+    <span class="hero-compare-badge">Illustrative example</span>
+    <p class="hero-compare-title">Typical MAG7.ssi volatility vs S&amp;P500 (conceptual)</p>
+    <div class="hero-bars">
+      <div class="hero-bar-row">
+        <span class="hero-bar-label">S&amp;P500</span>
+        <div class="hero-bar-track"><div class="hero-bar-fill hero-bar-sp500" aria-hidden="true"></div></div>
+      </div>
+      <div class="hero-bar-row">
+        <span class="hero-bar-label">MAG7.ssi</span>
+        <div class="hero-bar-track"><div class="hero-bar-fill hero-bar-mag7" aria-hidden="true"></div></div>
+      </div>
+    </div>
+    <p class="hero-compare-note">Bars are not live data. Your diagnosis uses SoSoValue-backed metrics.</p>
+  </div>
 
   <div class="ssi-grid">
     <div class="ssi-btn selected" onclick="selectSSI(this,'MAG7.ssi')">

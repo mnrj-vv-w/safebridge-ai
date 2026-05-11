@@ -202,6 +202,8 @@ SafeBridge AI is designed around the **MAG7.ssi** path, which is the demo flow w
 
 Aligned with the official SoSoValue × AKINDO Buildathon 2026 Wave focus statements.
 
+**Wave 2–3 priorities may be reordered after Wave 1 validation** (user feedback, API spikes, and rate-limit / auth realities)—the bullets below are the current plan, not a fixed contract.
+
 ### Wave 1 — Concept Validation *(this submission)*
 *Official Focus: idea, target users, use case, API usage plan, workflow, early prototype.*
 
@@ -245,7 +247,7 @@ Aligned with the official SoSoValue × AKINDO Buildathon 2026 Wave focus stateme
 
 ---
 
-## 🏆 Why SafeBridge Wins
+## For judges: rubric alignment
 
 | Other Teams | SafeBridge |
 |---|---|

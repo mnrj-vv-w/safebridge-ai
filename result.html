@@ -192,6 +192,16 @@
       transition: width 1.2s ease;
     }
     .cbar-text { font-size: 12px; font-weight: 600; }
+    .sp500-compare-note {
+      font-size: 12px;
+      color: #6B7280;
+      line-height: 1.65;
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: #F3F4F6;
+      border-radius: 8px;
+    }
+    .sp500-compare-note strong { color: #4B5563; }
     .scenario-box {
       font-size: 13px; color: #6B7280;
       line-height: 1.7;
@@ -872,6 +882,10 @@
           <span class="cbar-text" id="ssi-bar-text" style="color:#92400E;">—</span>
         </div>
       </div>
+    </div>
+    <div class="sp500-compare-note" id="sp500-compare-note">
+      <strong>How to read this:</strong> S&amp;P500 here is a <em>familiar volatility benchmark</em> so you can feel relative risk — not a promise that prices move together.
+      Low day-to-day correlation with equities can still mean a useful diversification building block depending on your goals and sizing (not advice).
     </div>
     <div class="scenario-box" id="scenario-box">
       Calculating scenario…
@@ -1891,7 +1905,9 @@ function renderAll() {
   document.getElementById('signal-dot').style.background = tier.color;
   document.getElementById('signal-label').textContent = tier.label;
   document.getElementById('signal-label').style.color = tier.color;
-  const volStr = state.volMult ? `${state.volMult.toFixed(1)}× more volatile than S&P500` : tier.sub;
+  const volStr = state.volMult
+    ? `${state.volMult.toFixed(1)}× more volatile than S&P500 — volatility benchmark, not correlation`
+    : tier.sub;
   document.getElementById('signal-sub').textContent = volStr;
   document.getElementById('score-num').textContent = state.riskScore;
 
@@ -1930,12 +1946,16 @@ function renderAll() {
   ssiBar.style.background = tier.color + '33';
   document.getElementById('ssi-bar-text').style.color = tier.color;
 
-  // Scenario
+  // Scenario (illustrative ranges from vol multiple — not forecasts)
   const lo = (5 * state.volMult).toFixed(0);
   const hi = (5 * state.volMult * 1.5).toFixed(0);
+  const oneLo = (1 * state.volMult).toFixed(0);
+  const oneHi = (1 * state.volMult * 1.5).toFixed(0);
   document.getElementById('scenario-box').innerHTML =
-    `If S&amp;P500 drops <strong>-5%</strong>, ${state.ticker} could drop ` +
-    `<strong>-${lo}% to -${hi}%</strong> — based on ${state.volMult.toFixed(1)}× historical volatility.`;
+    `<div>If S&amp;P500 drops <strong>-5%</strong>, ${state.ticker} could drop ` +
+    `<strong>-${lo}% to -${hi}%</strong> — illustrative range from ${state.volMult.toFixed(1)}× historical volatility.</div>` +
+    `<div style="margin-top:10px">If S&amp;P500 moves <strong>±1%</strong>, ${state.ticker} might move roughly ` +
+    `<strong>±${oneLo}% to ±${oneHi}%</strong> — same scaling heuristic (not a forecast).</div>`;
 
   renderSosoIndexCard();
 

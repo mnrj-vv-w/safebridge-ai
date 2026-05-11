@@ -12,6 +12,7 @@
 - Open the live demo and run `MAG7.ssi` first.
 - Confirm the loading-stage **Diagnosis pipeline** shows real API steps (`✓ / ⚠ / ✗`, timing).
 - On results, check the **S&P500-framed risk signal + SBSI + clear SSI CTA**.
+- The S&P500 bar compares **relative volatility (a familiar benchmark)** — it does **not** claim day-to-day price correlation with equities.
 - If one API is unstable, verify the app still finishes via graceful fallback.
 - Check the **Quick Decision** block: it is computed from volatility, bias quiz adjustment, and live-data quality status (`Live/Partial/Fallback`), not a static sentence.
 - Architecture strategy: Wave 1 intentionally stays lean; Wave 2 separates data/diagnosis/presentation/tracking; Wave 3 adds policy validation and observability hardening.
@@ -32,7 +33,7 @@ Why retail index-fund investors hesitate (recurring themes from public investor 
 SafeBridge AI is built around exactly these three barriers.
 
 SafeBridge AI solves this by:
-- ✅ Comparing crypto risk **directly against S&P500**
+- ✅ Comparing crypto risk **against S&P500 volatility as a psychological benchmark** (relative risk translation, not a correlation claim)
 - ✅ Scoring safety using **live market data** plus **ETF flow signals from SoSoValue** (MAG7.ssi path) when available
 - ✅ Providing **plain-language AI recommendations**
 - ✅ **Guiding users to SoSoValue SSI** for safer entry
@@ -44,7 +45,7 @@ SafeBridge AI solves this by:
 | Feature | Description |
 |---|---|
 | 🔴🟡🟢 **SBSI Score** | SafeBridge Sentiment Index (0–100) adjusted for index fund investors |
-| 📊 **S&P500 Comparison** | Risk expressed as a multiple of familiar benchmarks |
+| 📊 **S&P500 Comparison** | Risk expressed as a multiple of a familiar **volatility** benchmark (not a promise that prices move together) |
 | 🔍 **Safety Layer** | Live vs fallback data checks, optional ETF flow readout (SoSoValue), behavioral bias quiz |
 | 🤖 **AI Recommendation** | Plain-language action advice via OpenRouter, with inline `[#N]` citations that scroll to the matching news row |
 | 📰 **Investor Safety Feed** | Top-5 SoSoValue news items, each tagged **Risk-up / Risk-down / Watch** with a one-line S&P500-investor takeaway from the same AI call |

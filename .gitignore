@@ -77,6 +77,12 @@ docker-compose.override.yml
 *.old
 *.save
 
+# Local scratch / staging (not for repo)
+old/
+
+# Private notes (not for repo)
+docs/private/
+
 # =========================
 # Local recordings / media (not for repo)
 # =========================

@@ -6,7 +6,8 @@
 
 🔗 **Live Demo**: [safebridge-ai.vercel.app](https://safebridge-ai.vercel.app)
 🎬 **Demo Video (3 min, EN)**: _link added on submission (Day 3)_
-📋 **API Usage Plan**: [`docs/api_usage_plan.md`](docs/api_usage_plan.md)
+📋 **API Usage Plan**: [`docs/api_usage_plan.md`](docs/api_usage_plan.md)  
+🧭 **Dynamic UI → data lineage (for judges)**: [`docs/judge_dynamic_display_matrix.md`](docs/judge_dynamic_display_matrix.md)
 
 ### For Judges (60-second path)
 - Open the live demo and run `MAG7.ssi` first.
@@ -253,6 +254,12 @@ Aligned with the official SoSoValue × AKINDO Buildathon 2026 Wave focus stateme
 | Indirect SSI | **Direct SSI onboarding** |
 
 > Audience-size figures above are order-of-magnitude estimates intended to frame the opportunity, not precise market research.
+
+---
+
+## Media credits
+
+**Demo / presentation BGM:** Music by [Viacheslav Starostin](https://pixabay.com/users/starostin-46826676/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=484374) from [Pixabay](https://pixabay.com/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=484374) (track id 484374).
 
 ---
 

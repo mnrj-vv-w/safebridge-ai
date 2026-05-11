@@ -573,6 +573,137 @@
     .soso-sym { font-weight: 600; text-transform: uppercase; color: #374151; }
     .soso-w { color: #6B7280; font-variant-numeric: tabular-nums; }
     .soso-muted { font-size: 12px; color: #9CA3AF; line-height: 1.5; margin-top: 8px; }
+
+    /* ---------- Investor Safety Feed (Version C, soft) ---------- */
+    .feed-card {
+      padding: 18px 18px 14px;
+      background: #FCFCFD;
+      border: 1px solid #ECEEF2;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+    .feed-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .feed-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1F2937;
+      letter-spacing: 0.01em;
+    }
+    .feed-meta {
+      font-size: 10px;
+      color: #9CA3AF;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 500;
+    }
+    .feed-row {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      padding: 12px 0;
+      border-top: 1px solid #F1F2F5;
+      transition: background-color 0.3s ease;
+      border-radius: 6px;
+    }
+    .feed-row:first-child { border-top: none; padding-top: 4px; }
+    .feed-row--flash {
+      background-color: #FEF3C7;
+      animation: feedFlash 1.4s ease-out;
+    }
+    @keyframes feedFlash {
+      0%   { background-color: #FEF3C7; }
+      100% { background-color: transparent; }
+    }
+    .feed-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 22px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      align-self: flex-start;
+      margin-top: 1px;
+      border: 1px solid transparent;
+    }
+    .feed-tag--risk-up    { background: #ECFDF5; color: #047857; border-color: #D1FAE5; }
+    .feed-tag--risk-down  { background: #FEF2F2; color: #B91C1C; border-color: #FEE2E2; }
+    .feed-tag--watch      { background: #F3F4F6; color: #4B5563; border-color: #E5E7EB; }
+    .feed-body { min-width: 0; }
+    .feed-headline {
+      font-size: 13px;
+      line-height: 1.45;
+      color: #1F2937;
+      font-weight: 500;
+    }
+    .feed-title-link {
+      color: #185FA5;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    .feed-title-link:hover { border-bottom-color: #185FA5; }
+    .feed-title-link.feed-title-plain { color: #1F2937; }
+    .feed-cite-badge {
+      display: inline-block;
+      margin-left: 4px;
+      padding: 1px 5px;
+      font-size: 10px;
+      color: #9CA3AF;
+      background: #F9FAFB;
+      border: 1px solid #ECEEF2;
+      border-radius: 4px;
+      font-variant-numeric: tabular-nums;
+      vertical-align: 2px;
+    }
+    .feed-meaning {
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #4B5563;
+    }
+    .feed-meaning--pending {
+      color: #9CA3AF;
+      font-style: italic;
+    }
+    .feed-meta-line {
+      margin-top: 4px;
+      font-size: 11px;
+      color: #9CA3AF;
+      font-variant-numeric: tabular-nums;
+    }
+    .feed-foot {
+      margin: 10px 0 0;
+      font-size: 11px;
+      color: #9CA3AF;
+      line-height: 1.5;
+    }
+    .news-cite {
+      display: inline-block;
+      padding: 0 4px;
+      margin: 0 1px;
+      font-size: 0.9em;
+      color: #185FA5;
+      background: #F0F6FC;
+      border: 1px solid #DCE7F2;
+      border-radius: 4px;
+      text-decoration: none;
+      font-variant-numeric: tabular-nums;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+    .news-cite:hover { background: #DCE7F2; color: #0C447C; }
+    .news-cite:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px #fff, 0 0 0 4px #185FA5;
+    }
     .soso-row--wrap {
       flex-wrap: wrap;
       align-items: flex-start;
@@ -809,6 +940,22 @@
     </p>
   </div>
 
+  <!-- INVESTOR SAFETY FEED -->
+  <div id="feed-section" hidden>
+    <p class="section-label">Investor Safety Feed</p>
+    <div class="card feed-card" id="feed-card" aria-label="Investor Safety Feed">
+      <div class="feed-head">
+        <span class="feed-title">Latest signals — what they mean for index-fund investors</span>
+        <span class="feed-meta" id="feed-meta">SoSoValue /news</span>
+      </div>
+      <div id="feed-list"></div>
+      <p class="feed-foot">
+        Tags are SafeBridge heuristics, refined by AI when available.
+        News rows are the top 5 English-language items from SoSoValue's news feed, filtered around the basket's anchor.
+      </p>
+    </div>
+  </div>
+
   <!-- DETAIL ANALYSIS -->
   <p class="section-label">Detailed Analysis</p>
   <div class="detail-grid" id="detail-analysis-grid">
@@ -992,7 +1139,9 @@ const state = {
   newsTotal: null,
   newsAttention: null,
   newsCurrencyLabel: null,
-  etfFlowSymbol: null
+  etfFlowSymbol: null,
+  newsRows: [],
+  newsAnnotations: null
 };
 
 // ---------- ENTRY ----------
@@ -1196,6 +1345,162 @@ function attentionFromNewsList(list) {
   return Math.round((sum / n) * 100);
 }
 
+// ---------- INVESTOR SAFETY FEED HELPERS ----------
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function normalizeNewsRow(raw) {
+  if (!raw || typeof raw !== 'object') {
+    return { title: '(untitled)', url: null, src: null, ts: null };
+  }
+  const title = raw.title || raw.headline || raw.subject || raw.name || '(untitled)';
+  const url = raw.url || raw.link || raw.source_url || raw.article_url || null;
+  const src = raw.source || raw.media || raw.publisher || raw.source_name || null;
+  let tsRaw = raw.published_at || raw.pub_time || raw.publish_time
+           || raw.timestamp || raw.created_at || raw.time || null;
+  let ts = null;
+  if (tsRaw != null) {
+    if (typeof tsRaw === 'number') {
+      ts = tsRaw < 1e12 ? tsRaw * 1000 : tsRaw;
+    } else {
+      const parsed = Date.parse(tsRaw);
+      if (Number.isFinite(parsed)) ts = parsed;
+    }
+  }
+  return { title: String(title), url, src: src ? String(src) : null, ts };
+}
+
+function formatRelativeTime(ts) {
+  if (!ts || !Number.isFinite(ts)) return '';
+  const diffMs = Date.now() - ts;
+  if (diffMs < 0) return 'just now';
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day}d ago`;
+  const wk = Math.floor(day / 7);
+  if (wk < 5) return `${wk}w ago`;
+  const mo = Math.floor(day / 30);
+  return `${mo}mo ago`;
+}
+
+function heuristicTag(_idx) {
+  const ss = state.snapshotSentiment;
+  const att = state.newsAttention;
+  if (!ss || !Number.isFinite(ss.pct24h)) return 'watch';
+  if (ss.pct24h > 0.3 && (att == null || att >= 40)) return 'risk-up';
+  if (ss.pct24h < -0.3 && (att == null || att >= 40)) return 'risk-down';
+  return 'watch';
+}
+
+const FEED_TAG_LABEL = {
+  'risk-up': 'Risk-up',
+  'risk-down': 'Risk-down',
+  'watch': 'Watch'
+};
+
+function normalizeFeedTag(tag) {
+  if (typeof tag !== 'string') return 'watch';
+  const t = tag.toLowerCase().trim();
+  if (t === 'risk-up' || t === 'risk_up' || t === 'riskup') return 'risk-up';
+  if (t === 'risk-down' || t === 'risk_down' || t === 'riskdown') return 'risk-down';
+  return 'watch';
+}
+
+function renderInvestorSafetyFeed() {
+  const section = document.getElementById('feed-section');
+  const list = document.getElementById('feed-list');
+  const meta = document.getElementById('feed-meta');
+  if (!section || !list) return;
+
+  const rows = state.newsRows || [];
+  if (!rows.length) {
+    section.setAttribute('hidden', '');
+    return;
+  }
+  section.removeAttribute('hidden');
+
+  if (meta) {
+    const label = state.newsCurrencyLabel || 'top constituent';
+    meta.textContent = `SoSoValue /news · ${label}`;
+  }
+
+  const annotations = state.newsAnnotations || {};
+  const html = rows.map((row, i) => {
+    const idx = i + 1;
+    const ann = annotations[String(idx)] || {};
+    const tag = normalizeFeedTag(ann.tag || heuristicTag(idx));
+    const tagLabel = FEED_TAG_LABEL[tag];
+    const titleText = escapeHtml(row.title || '(untitled)');
+    const titleHtml = row.url
+      ? `<a class="feed-title-link" href="${escapeHtml(row.url)}" target="_blank" rel="noopener noreferrer">${titleText}</a>`
+      : `<span class="feed-title-link feed-title-plain">${titleText}</span>`;
+    const meaning = ann.meaning ? escapeHtml(ann.meaning) : '';
+    const meaningHtml = meaning
+      ? `<div class="feed-meaning">${meaning}</div>`
+      : `<div class="feed-meaning feed-meaning--pending">Tag is a SafeBridge heuristic — AI takeaway loads next.</div>`;
+    const metaParts = [];
+    if (row.src) metaParts.push(escapeHtml(row.src));
+    const rel = formatRelativeTime(row.ts);
+    if (rel) metaParts.push(rel);
+    const metaLine = metaParts.length
+      ? `<div class="feed-meta-line">${metaParts.join(' · ')}</div>`
+      : '';
+    const cite = `<span class="feed-cite-badge" aria-hidden="true">[#${idx}]</span>`;
+    return `
+      <div class="feed-row" id="feed-row-${idx}" data-feed-idx="${idx}">
+        <span class="feed-tag feed-tag--${tag}">${tagLabel}</span>
+        <div class="feed-body">
+          <div class="feed-headline">${titleHtml} ${cite}</div>
+          ${meaningHtml}
+          ${metaLine}
+        </div>
+      </div>
+    `;
+  }).join('');
+  list.innerHTML = html;
+}
+
+function linkifyCitations(html) {
+  if (!html) return '';
+  return String(html).replace(/\[#(\d+)\]/g, (_m, n) => {
+    return `<a href="#feed-row-${n}" class="news-cite" data-feed-idx="${n}" aria-label="Jump to news ${n}">[#${n}]</a>`;
+  });
+}
+
+function renderRecommendationWithCitations(plainText) {
+  const escaped = escapeHtml(plainText || '').replace(/\n{2,}/g, '<br><br>').replace(/\n/g, ' ');
+  return linkifyCitations(escaped);
+}
+
+function bindFeedCitationHandler(container) {
+  if (!container) return;
+  container.addEventListener('click', (ev) => {
+    const a = ev.target.closest('a.news-cite');
+    if (!a) return;
+    const n = a.getAttribute('data-feed-idx');
+    if (!n) return;
+    const row = document.getElementById(`feed-row-${n}`);
+    if (!row) return;
+    ev.preventDefault();
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.classList.remove('feed-row--flash');
+    void row.offsetWidth;
+    row.classList.add('feed-row--flash');
+    setTimeout(() => row.classList.remove('feed-row--flash'), 1400);
+  });
+}
+
 // ---------- DIAGNOSIS PIPELINE ----------
 async function runDiagnosis() {
   const tickerUpper = state.ticker.toUpperCase();
@@ -1211,6 +1516,8 @@ async function runDiagnosis() {
   state.newsAttention = null;
   state.newsCurrencyLabel = null;
   state.etfFlowSymbol = null;
+  state.newsRows = [];
+  state.newsAnnotations = null;
 
   let cgId = null;
   if (isSSI && proxy) {
@@ -1329,6 +1636,7 @@ async function runDiagnosis() {
         if (newsTotalRaw != null) state.newsTotal = Math.round(newsTotalRaw);
         else if (newsList.length) state.newsTotal = newsList.length;
         state.newsAttention = attentionFromNewsList(newsList);
+        state.newsRows = newsList.slice(0, 5).map(normalizeNewsRow);
       } else {
         state.errors.push('SoSoValue news feed unavailable');
       }
@@ -1630,6 +1938,18 @@ function renderAll() {
     `<strong>-${lo}% to -${hi}%</strong> — based on ${state.volMult.toFixed(1)}× historical volatility.`;
 
   renderSosoIndexCard();
+
+  // Investor Safety Feed (initial render with heuristic tags; fetchAi() refreshes after LLM)
+  if (state.newsRows && state.newsRows.length) {
+    if (!state.newsAnnotations) {
+      state.newsAnnotations = {};
+      for (let i = 0; i < state.newsRows.length; i++) {
+        const idx = i + 1;
+        state.newsAnnotations[String(idx)] = { tag: heuristicTag(idx), meaning: '' };
+      }
+    }
+    renderInvestorSafetyFeed();
+  }
 
   // Detail cards
   document.getElementById('d-vol').textContent = state.vol
@@ -1966,8 +2286,16 @@ async function fetchAi() {
   const aiText = document.getElementById('ai-text');
   const tier = TIERS.find(t => state.riskScore <= t.max) || TIERS[TIERS.length - 1];
 
+  bindFeedCitationHandler(aiText);
+
   const fallback = templateAdvice(tier);
-  aiText.innerHTML = fallback;
+  aiText.innerHTML = linkifyCitations(fallback);
+
+  const newsRowsPayload = (state.newsRows || []).map((r, i) => ({
+    idx: i + 1,
+    title: r.title || '',
+    src: r.src || ''
+  }));
 
   try {
     const res = await fetch('/api/openrouter', {
@@ -1984,13 +2312,30 @@ async function fetchAi() {
           ? `${state.snapshotSentiment.label} (${state.snapshotSentiment.pct24h.toFixed(2)}% 24h)`
           : 'N/A',
         newsFeedTotal: state.newsTotal != null ? state.newsTotal : 'N/A',
-        newsAttention: state.newsAttention != null ? state.newsAttention : 'N/A'
+        newsAttention: state.newsAttention != null ? state.newsAttention : 'N/A',
+        newsRows: newsRowsPayload
       })
     });
     if (!res.ok) return;
     const data = await res.json();
-    if (data?.recommendation) {
-      aiText.textContent = data.recommendation;
+
+    if (Array.isArray(data?.news) && data.news.length && state.newsRows.length) {
+      if (!state.newsAnnotations) state.newsAnnotations = {};
+      for (const ann of data.news) {
+        const idx = Number(ann?.idx);
+        if (!Number.isFinite(idx) || idx < 1 || idx > state.newsRows.length) continue;
+        const key = String(idx);
+        const prev = state.newsAnnotations[key] || {};
+        state.newsAnnotations[key] = {
+          tag: normalizeFeedTag(ann.tag || prev.tag),
+          meaning: typeof ann.meaning === 'string' ? ann.meaning : (prev.meaning || '')
+        };
+      }
+      renderInvestorSafetyFeed();
+    }
+
+    if (typeof data?.recommendation === 'string' && data.recommendation.trim()) {
+      aiText.innerHTML = renderRecommendationWithCitations(data.recommendation.trim());
     }
   } catch {}
 }
@@ -2036,10 +2381,12 @@ function templateAdvice(tier) {
   const contextSentences = [momentumLine, newsLine, etfLine].filter(Boolean).join(' ');
   const contextBlock = contextSentences ? `${contextSentences}<br><br>` : '';
 
+  const citeSuffix = (state.newsRows && state.newsRows.length >= 1) ? ' [#1]' : '';
+
   return `${t} sits in the <strong>${tier.label.toLowerCase()}</strong> band, currently ` +
          `<strong>${mult}× more volatile than the S&amp;P500</strong>.<br><br>` +
          `${contextBlock}${allocLine}<br><br>Keep your S&amp;P500 index fund running as the core — ` +
-         `think of crypto as a small "plus alpha" experiment, not a replacement.${biasLine}`;
+         `think of crypto as a small "plus alpha" experiment, not a replacement.${citeSuffix}${biasLine}`;
 }
 
 // ---------- PWA ----------

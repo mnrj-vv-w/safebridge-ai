@@ -42,8 +42,20 @@ All external APIs are reached through Vercel Functions under `/api/*` so that se
 | `POST https://openrouter.ai/api/v1/chat/completions` (model: `openai/gpt-3.5-turbo`) | `api/openrouter.js`, called from `result.html` after numeric scoring is complete | Plain-language 3–4 sentence recommendation tailored for index-fund investors |
 
 - **Auth**: `Authorization: Bearer <OPENROUTER_API_KEY>` plus `HTTP-Referer` + `X-Title` for OpenRouter attribution.
-- **Prompt inputs** (passed from the page so the LLM cannot hallucinate the numbers): `ticker`, `riskScore`, `volatilityMultiple`, `etfFlow`, `safetyScore`, `signal`, `indexMomentum`, `newsFeedTotal`, `newsAttention`.
-- **Fallback UX**: any failure (network, 4xx/5xx, missing key) triggers `templateAdvice()` in `result.html`, which assembles a deterministic recommendation from the same numeric inputs so the user always sees a recommendation card.
+- **Prompt inputs** (passed from the page so the LLM cannot hallucinate the numbers): `ticker`, `riskScore`, `volatilityMultiple`, `etfFlow`, `safetyScore`, `signal`, `indexMomentum`, `newsFeedTotal`, `newsAttention`, **`newsRows[]`** (top-5 SoSoValue news items: `{ idx, title, src }`).
+- **Output shape** (JSON mode, `response_format: { type: 'json_object' }`):
+  ```json
+  {
+    "recommendation": "<3–4 sentence text. MUST cite at least one news row as [#N] when newsRows is non-empty.>",
+    "news": [ { "idx": 1, "tag": "risk-up | risk-down | watch", "meaning": "<=14 word S&P500-investor takeaway" } ]
+  }
+  ```
+  The `news[]` annotations feed the **Investor Safety Feed** card, and `[#N]` tokens inside `recommendation` are converted to anchor links that scroll to the matching news row in the feed.
+- **Fallback UX** (multi-stage, designed so the page never breaks):
+  1. JSON parses → both `recommendation` and per-row `news[]` annotations are used.
+  2. JSON parse fails but `"recommendation": "…"` can be regex-extracted → that text is used; the feed keeps the SafeBridge heuristic tags (no AI takeaways).
+  3. Network / 4xx / 5xx / missing key → `templateAdvice()` in `result.html` assembles a deterministic recommendation from the same numeric inputs and auto-appends `[#1]` when at least one news row exists, so the citation anchor still demonstrates the agentic news loop.
+- **`max_tokens`**: 380 (extra headroom for the JSON wrapper + up to 5 short `meaning` strings).
 
 ### 1.4 Vercel Function proxies — security & shape
 
@@ -152,3 +164,4 @@ No new external dependencies are planned for Wave 3 beyond what is already integ
 | Date | Change |
 |---|---|
 | 2026-05-10 | Initial version covering Wave 1 live integrations and Wave 2 / Wave 3 candidates. |
+| 2026-05-11 | OpenRouter (§1.3) extended to JSON mode: input now carries `newsRows[]`, output returns `{recommendation, news[]}` for the Investor Safety Feed. Multi-stage fallback documented. |

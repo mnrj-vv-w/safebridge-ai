@@ -4,27 +4,29 @@
  *
  * Usage:
  *   POST /api/openrouter
- *   Body: { ticker, riskScore, etfFlow, safetyScore, volatilityMultiple, signal, indexMomentum?, newsFeedTotal?, newsAttention? }
+ *   Body: {
+ *     ticker, riskScore, etfFlow, safetyScore, volatilityMultiple, signal,
+ *     indexMomentum?, newsFeedTotal?, newsAttention?,
+ *     newsRows?: Array<{ idx, title, src }>   // top-5 SoSoValue news rows
+ *   }
+ *
+ * Response:
+ *   {
+ *     recommendation: string,
+ *     news: Array<{ idx: number, tag: 'risk-up'|'risk-down'|'watch', meaning: string }>
+ *   }
  */
 
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'API key not configured' });
-  }
+  if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
 
   const {
     ticker = 'MAG7.ssi',
@@ -36,9 +38,24 @@ export default async function handler(req, res) {
     indexMomentum = 'N/A',
     newsFeedTotal = 'N/A',
     newsAttention = 'N/A',
+    newsRows = [],
   } = req.body || {};
 
-  // Build prompt for AI
+  const safeNewsRows = Array.isArray(newsRows)
+    ? newsRows
+        .filter(r => r && typeof r === 'object')
+        .slice(0, 5)
+        .map((r, i) => ({
+          idx: Number.isFinite(Number(r.idx)) ? Number(r.idx) : (i + 1),
+          title: String(r.title || '').slice(0, 200),
+          src: String(r.src || '').slice(0, 80)
+        }))
+    : [];
+
+  const newsBlock = safeNewsRows.length
+    ? safeNewsRows.map(r => `#${r.idx} (${r.src || 'source N/A'}) ${r.title}`).join('\n')
+    : '(no news rows available)';
+
   const prompt = `You are SafeBridge AI, a crypto risk advisor for traditional index fund investors (people who know S&P500 and ETFs but find crypto intimidating).
 
 Live signals for ${ticker}:
@@ -50,10 +67,16 @@ Live signals for ${ticker}:
 - Related news volume (SoSoValue news feed total): ${newsFeedTotal}
 - News attention index (0-100, our engagement proxy): ${newsAttention}
 
-Write a 3-4 sentence plain-language recommendation for someone who:
-- Owns an S&P500 index fund
-- Is considering crypto for the first time
-- Is cautious and risk-aware
+Top-5 SoSoValue news rows (use idx to cite):
+${newsBlock}
+
+Return ONLY a single JSON object with this exact shape (no markdown, no commentary):
+{
+  "recommendation": "<3-4 sentence plain-language recommendation>",
+  "news": [
+    { "idx": <int from 1..${Math.max(safeNewsRows.length, 1)}>, "tag": "risk-up" | "risk-down" | "watch", "meaning": "<<=14 word S&P500-investor takeaway>" }
+  ]
+}
 
 Hard rules (follow ALL of them):
 1. The first sentence MUST anchor on the S&P500 volatility multiple in plain English (e.g. "behaves like the S&P500 but ${volatilityMultiple}x more volatile").
@@ -61,7 +84,9 @@ Hard rules (follow ALL of them):
 3. End with a specific, actionable suggestion sized to the risk band (e.g. "start with 2-3% of your portfolio" for higher risk; "you can scale a bit higher" for lower risk).
 4. The final sentence MUST remind the reader to keep their S&P500 index fund running untouched (e.g. "Keep your S&P500 index fund running as the core").
 5. Do NOT use jargon like "DeFi", "on-chain", "smart contract", "TVL", "alpha".
-6. Keep the whole response under 110 words and never invent numbers that are not in the data above.`;
+6. Keep the recommendation under 110 words and never invent numbers that are not in the data above.
+7. If at least one news row exists, cite at least ONE news item by its index using the literal token "[#N]" (e.g. "[#1]") inside the recommendation body.
+8. "news" MUST contain one object per provided news row (same idx), tag is one of risk-up|risk-down|watch, meaning is at most 14 words from an S&P500 index-fund investor's perspective. If no news rows were provided, return an empty array for "news".`;
 
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -74,7 +99,8 @@ Hard rules (follow ALL of them):
       },
       body: JSON.stringify({
         model: 'openai/gpt-3.5-turbo',
-        max_tokens: 200,
+        max_tokens: 380,
+        response_format: { type: 'json_object' },
         messages: [
           { role: 'user', content: prompt }
         ],
@@ -90,9 +116,40 @@ Hard rules (follow ALL of them):
     }
 
     const data = await response.json();
-    const message = data.choices?.[0]?.message?.content || 'Unable to generate recommendation.';
+    const raw = data.choices?.[0]?.message?.content || '';
 
-    return res.status(200).json({ recommendation: message });
+    let recommendation = '';
+    let news = [];
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        if (typeof parsed.recommendation === 'string') {
+          recommendation = parsed.recommendation.trim();
+        }
+        if (Array.isArray(parsed.news)) {
+          news = parsed.news
+            .filter(n => n && typeof n === 'object')
+            .map(n => ({
+              idx: Number(n.idx),
+              tag: typeof n.tag === 'string' ? n.tag : 'watch',
+              meaning: typeof n.meaning === 'string' ? n.meaning : ''
+            }))
+            .filter(n => Number.isFinite(n.idx) && n.idx >= 1 && n.idx <= safeNewsRows.length);
+        }
+      }
+    } catch {
+      const recMatch = raw.match(/"recommendation"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/);
+      if (recMatch) {
+        recommendation = recMatch[1].replace(/\\"/g, '"').replace(/\\n/g, ' ').trim();
+      } else if (raw.trim()) {
+        recommendation = raw.trim();
+      }
+    }
+
+    if (!recommendation) recommendation = 'Unable to generate recommendation.';
+
+    return res.status(200).json({ recommendation, news });
 
   } catch (error) {
     return res.status(500).json({

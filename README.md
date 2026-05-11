@@ -14,6 +14,7 @@
 - On results, check the **S&P500-framed risk signal + SBSI + clear SSI CTA**.
 - If one API is unstable, verify the app still finishes via graceful fallback.
 - Check the **Quick Decision** block: it is computed from volatility, bias quiz adjustment, and live-data quality status (`Live/Partial/Fallback`), not a static sentence.
+- Architecture strategy: Wave 1 intentionally stays lean; Wave 2 separates data/diagnosis/presentation/tracking; Wave 3 adds policy validation and observability hardening.
 
 ---
 
@@ -45,7 +46,8 @@ SafeBridge AI solves this by:
 | 🔴🟡🟢 **SBSI Score** | SafeBridge Sentiment Index (0–100) adjusted for index fund investors |
 | 📊 **S&P500 Comparison** | Risk expressed as a multiple of familiar benchmarks |
 | 🔍 **Safety Layer** | Live vs fallback data checks, optional ETF flow readout (SoSoValue), behavioral bias quiz |
-| 🤖 **AI Recommendation** | Plain-language action advice via OpenRouter |
+| 🤖 **AI Recommendation** | Plain-language action advice via OpenRouter, with inline `[#N]` citations that scroll to the matching news row |
+| 📰 **Investor Safety Feed** | Top-5 SoSoValue news items, each tagged **Risk-up / Risk-down / Watch** with a one-line S&P500-investor takeaway from the same AI call |
 | 📈 **Backtest (Wave 1 proxy)** | 90-day return and max drawdown from price history as quick evidence (full signal backtest planned for Wave 2) |
 | 🎯 **SSI Onboarding** | Direct guidance to **SoSoValue MAG7.ssi** |
 
@@ -206,6 +208,7 @@ Aligned with the official SoSoValue × AKINDO Buildathon 2026 Wave focus stateme
 - ✅ **7-tier risk signal** anchored on S&P500 volatility multiple
 - ✅ **Layer Scorecard** (safety / action / 90-day backtest proxy)
 - ✅ **Agentic live pipeline log** showing each API hop with success / partial / fail status
+- ✅ **Investor Safety Feed** — top-5 SoSoValue news rows with Risk-up / Risk-down / Watch tags and per-row S&P500-investor takeaways; AI recommendation cites them inline as `[#N]` anchors
 - ✅ Direct **SSI onboarding CTA** (MAG7.ssi) as the explicit next step
 - ✅ Graceful degradation on every external dependency (`Full live` / `Partial` / `Fallback` pill)
 - ✅ PWA shell (manifest + service worker) for static-shell offline reload
@@ -222,6 +225,7 @@ Aligned with the official SoSoValue × AKINDO Buildathon 2026 Wave focus stateme
 - 🔲 Multilingual UI (JA) on top of the existing EN baseline
 - 🔲 Data-driven SSI ↔ anchor-coin mapping (remove the hardcoded list)
 - 🔲 **UX measurement phase**: core analytics instrumentation + CTA color A/B test (`result_view → cta_click_sosovalue`)
+- 🔲 **Weighted scoring v1**: introduce explicit signal weights (volatility / momentum / flow / bias) as a documented model
 
 ### Wave 3 — Build Phase II *(Jun 4 – Jun 15)*
 *Official Focus: risk control, confirmation mechanism, security awareness, polished demo.*
@@ -232,6 +236,8 @@ Aligned with the official SoSoValue × AKINDO Buildathon 2026 Wave focus stateme
 - 🔲 Multilingual UI (ZH)
 - 🔲 Polished demo + Demo Day storyline
 - 🔲 **Major UX restructuring**: result first-view redesign (conclusion-first hierarchy) based on Wave2 measurement
+- 🔲 **Policy-table decision engine**: replace branching heuristics with auditable rule tables
+- 🔲 **Backtest threshold validation**: verify score/risk cutoffs against multi-period historical outcomes
 
 > UX planning docs: [`docs/設計書/UI/README.md`](docs/設計書/UI/README.md), [`docs/設計書/UI/ux_wireframe_v1.md`](docs/設計書/UI/ux_wireframe_v1.md), [`docs/設計書/UI/analytics_event_dictionary_v1.md`](docs/設計書/UI/analytics_event_dictionary_v1.md), [`docs/設計書/UI/event_payload_template_v1.md`](docs/設計書/UI/event_payload_template_v1.md)
 

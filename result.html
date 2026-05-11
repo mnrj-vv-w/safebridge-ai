@@ -1370,19 +1370,45 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+/** Strip HTML and trim for display title (SoSoValue news often has title=null, body in content). */
+function plainSnippetFromHtml(html, maxLen) {
+  if (html == null || html === '') return '';
+  const s = String(html)
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!s) return '';
+  if (s.length <= maxLen) return s;
+  return s.slice(0, Math.max(0, maxLen - 1)).trimEnd() + '\u2026';
+}
+
 function normalizeNewsRow(raw) {
   if (!raw || typeof raw !== 'object') {
     return { title: '(untitled)', url: null, src: null, ts: null };
   }
-  const title = raw.title || raw.headline || raw.subject || raw.name || '(untitled)';
-  const url = raw.url || raw.link || raw.source_url || raw.article_url || null;
-  const src = raw.source || raw.media || raw.publisher || raw.source_name || null;
+  let title = raw.title || raw.headline || raw.subject || raw.name || '';
+  if (title != null && typeof title !== 'string') title = String(title);
+  title = (title || '').trim();
+  if (!title && raw.content) {
+    title = plainSnippetFromHtml(raw.content, 140);
+  }
+  if (!title) title = '(untitled)';
+
+  const url = raw.url || raw.link || raw.source_url || raw.article_url
+    || raw.source_link || raw.original_link || null;
+  const src = raw.source || raw.media || raw.publisher || raw.source_name
+    || raw.nick_name || raw.author || null;
+
   let tsRaw = raw.published_at || raw.pub_time || raw.publish_time
-           || raw.timestamp || raw.created_at || raw.time || null;
+           || raw.timestamp || raw.created_at || raw.time || raw.release_time || null;
   let ts = null;
   if (tsRaw != null) {
     if (typeof tsRaw === 'number') {
       ts = tsRaw < 1e12 ? tsRaw * 1000 : tsRaw;
+    } else if (typeof tsRaw === 'string' && /^\d+$/.test(String(tsRaw).trim())) {
+      const n = Number(String(tsRaw).trim());
+      if (Number.isFinite(n)) ts = n < 1e12 ? n * 1000 : n;
     } else {
       const parsed = Date.parse(tsRaw);
       if (Number.isFinite(parsed)) ts = parsed;

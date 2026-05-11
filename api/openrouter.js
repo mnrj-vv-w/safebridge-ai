@@ -17,6 +17,73 @@
  *   }
  */
 
+function normalizeNewsTag(t) {
+  const s = String(t || '').toLowerCase().trim();
+  if (s === 'risk-up' || s === 'risk_up' || s === 'riskup') return 'risk-up';
+  if (s === 'risk-down' || s === 'risk_down' || s === 'riskdown') return 'risk-down';
+  return 'watch';
+}
+
+function heuristicTagFromNewsTitle(title) {
+  const t = String(title || '').toLowerCase();
+  if (/hack|exploit|lawsuit|\bsec\b|ban\b|crash|dump|liquidat|bear|loss|fraud|stolen|outflow|tariff|emergency|selloff/.test(t)) {
+    return 'risk-up';
+  }
+  if (/rally|surge|record|inflow|bull|breakthrough|\ball-?time\b|won\b/.test(t)) {
+    return 'risk-down';
+  }
+  return 'watch';
+}
+
+const HEURISTIC_MEANING = {
+  'risk-up': 'Rougher crypto headline vibe; keep any add tiny next to your index core.',
+  'risk-down': 'Friendlier tone; still treat crypto as a small satellite only.',
+  watch: 'Routine crypto chatter; do not act on this headline alone.',
+};
+
+function clampMeaningWords(str, maxWords) {
+  const parts = String(str || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  return parts.slice(0, maxWords).join(' ');
+}
+
+/**
+ * Prefer LLM per-row annotations; fill missing or empty meaning with SafeBridge heuristics.
+ */
+function mergeNewsAnnotations(safeNewsRows, llmNews) {
+  const n = safeNewsRows.length;
+  if (!n) return [];
+  const llmByIdx = new Map();
+  for (const item of llmNews || []) {
+    if (!item || typeof item !== 'object') continue;
+    const idx = Number(item.idx);
+    if (!Number.isFinite(idx) || idx < 1 || idx > n) continue;
+    llmByIdx.set(idx, item);
+  }
+  const out = [];
+  for (let i = 1; i <= n; i++) {
+    const title = safeNewsRows[i - 1]?.title || '';
+    const fallbackTag = heuristicTagFromNewsTitle(title);
+    let tag = fallbackTag;
+    let meaning = HEURISTIC_MEANING[fallbackTag] || HEURISTIC_MEANING.watch;
+
+    const llm = llmByIdx.get(i);
+    if (llm) {
+      const rawM = typeof llm.meaning === 'string' ? llm.meaning.trim() : '';
+      const m = clampMeaningWords(rawM, 14);
+      if (m) {
+        meaning = m;
+        const t = normalizeNewsTag(llm.tag);
+        if (t === 'risk-up' || t === 'risk-down' || t === 'watch') tag = t;
+      }
+    }
+    out.push({ idx: i, tag, meaning });
+  }
+  return out;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -56,6 +123,11 @@ export default async function handler(req, res) {
     ? safeNewsRows.map(r => `#${r.idx} (${r.src || 'source N/A'}) ${r.title}`).join('\n')
     : '(no news rows available)';
 
+  const newsRowCount = safeNewsRows.length;
+  const newsJsonExample = newsRowCount > 0
+    ? `  "news": [\n${safeNewsRows.map(r => `    { "idx": ${r.idx}, "tag": "watch", "meaning": "<=14 words>" }`).join(',\n')}\n  ]`
+    : `  "news": []`;
+
   const prompt = `You are SafeBridge AI, a crypto risk advisor for traditional index fund investors (people who know S&P500 and ETFs but find crypto intimidating).
 
 Live signals for ${ticker}:
@@ -73,9 +145,7 @@ ${newsBlock}
 Return ONLY a single JSON object with this exact shape (no markdown, no commentary):
 {
   "recommendation": "<3-4 sentence plain-language recommendation>",
-  "news": [
-    { "idx": <int from 1..${Math.max(safeNewsRows.length, 1)}>, "tag": "risk-up" | "risk-down" | "watch", "meaning": "<<=14 word S&P500-investor takeaway>" }
-  ]
+${newsJsonExample}
 }
 
 Hard rules (follow ALL of them):
@@ -86,7 +156,8 @@ Hard rules (follow ALL of them):
 5. Do NOT use jargon like "DeFi", "on-chain", "smart contract", "TVL", "alpha".
 6. Keep the recommendation under 110 words and never invent numbers that are not in the data above.
 7. If at least one news row exists, cite at least ONE news item by its index using the literal token "[#N]" (e.g. "[#1]") inside the recommendation body.
-8. "news" MUST contain one object per provided news row (same idx), tag is one of risk-up|risk-down|watch, meaning is at most 14 words from an S&P500 index-fund investor's perspective. If no news rows were provided, return an empty array for "news".`;
+8. If ${newsRowCount} news row(s) were provided above, the "news" array MUST contain exactly ${newsRowCount} object(s), one per idx from 1 to ${newsRowCount} inclusive, each with keys idx, tag, meaning. Never return an empty "news" array when ${newsRowCount} > 0.
+9. Each "meaning" is at most 14 words, plain English, from an S&P500 index-fund investor perspective; tag is one of risk-up|risk-down|watch. If no news rows were provided, return "news": [].`;
 
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -99,7 +170,7 @@ Hard rules (follow ALL of them):
       },
       body: JSON.stringify({
         model: 'openai/gpt-3.5-turbo',
-        max_tokens: 380,
+        max_tokens: 560,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'user', content: prompt }
@@ -149,7 +220,9 @@ Hard rules (follow ALL of them):
 
     if (!recommendation) recommendation = 'Unable to generate recommendation.';
 
-    return res.status(200).json({ recommendation, news });
+    const newsMerged = mergeNewsAnnotations(safeNewsRows, news);
+
+    return res.status(200).json({ recommendation, news: newsMerged });
 
   } catch (error) {
     return res.status(500).json({

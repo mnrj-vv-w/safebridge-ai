@@ -45,7 +45,8 @@ Merging **CoinGecko** prices/volatility with **SoSoValue** ETF/index hints into 
 **Vanilla HTML/CSS/JS**, **Vercel serverless** (`/api/coingecko`, `/api/sosovalue`, `/api/openrouter`), **CoinGecko**, **SoSoValue**, **OpenRouter**, plus **sessionStorage** for quiz → results.
 
 **Judge / reviewer deep dive (every dynamic block → data → code):**  
-[`docs/judge_dynamic_display_matrix.md`](judge_dynamic_display_matrix.md)
+[`docs/judge_dynamic_display_matrix.md`](
+https://github.com/mnrj-vv-w/safebridge-ai/blob/main/docs/judge_dynamic_display_matrix.md)
 
 ---
 
@@ -71,6 +72,8 @@ Pick **SSI/ticker** → optional **3-question bias quiz** → results: **S&P 500
 
 ## What’s next for SafeBridge AI
 
-Deeper **SoSoValue** integration, real **multi-horizon backtests**, **i18n**, better **offline/error UX**, and clearer **education vs. advice**
+Wave 2 focuses on **personalization + Macro market context**: profile-aware recommendations, FOMC/CPI/jobs event-window analysis for BTC/ETH/MAG7.ssi, initial SoDEX read integration, and beginner micro-learning blocks tied to each decision.
 
-Refactor strategy (high-level): keep Wave 1 lean, split runtime responsibilities in Wave 2 (data / diagnosis / presentation / tracking), and enforce policy validation plus operational observability in Wave 3.
+Wave 3 focuses on **risk control + completion**: policy-table decision rules, AI output validation, loss/stress simulation, Crypto-stocks-vs-S&P500 cross analysis, multi-horizon backtest views, and final UX/demo polish.
+
+Scope discipline: we intentionally keep NFT pledge minting, full community features, and full monetization implementation as post-Wave-3 options; fundraising-impact analysis enters only as a limited case-study after core risk-control is complete.

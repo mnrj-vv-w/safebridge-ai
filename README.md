@@ -222,26 +222,29 @@ Aligned with the official SoSoValue × AKINDO Buildathon 2026 Wave focus stateme
 ### Wave 2 — Build Phase I *(May 18 – May 29)*
 *Official Focus: core feature development, SoSoValue API integration, **initial SoDEX API or execution module integration**, interactive prototype.*
 
-- 🔲 **Initial SoDEX integration** (read-only `24h_volume`, `tvl`, `latest_swap`) surfaced as a new Detailed Analysis tile
-- 🔲 **Cross-Signal Agent** — LLM does horizontal reasoning across SoSoValue + CoinGecko + SoDEX in one prompt and flags conflicting signals
-- 🔲 Deeper SoSoValue surface: whale activity / DAT / additional sentiment indices
-- 🔲 Full per-signal historical backtest engine replacing the Wave 1 90-day proxy
-- 🔲 Multilingual UI (JA) on top of the existing EN baseline
+- 🔲 **Personalization v1 (highest priority)**: profile-aware Quick Decision output (risk appetite / horizon / current allocation) with transparent rule mapping
+- 🔲 **Macro × Market Analysis (Plan A, v1)**: event-window comparison around FOMC/CPI/jobs data for BTC / ETH / MAG7.ssi (lightweight, judge-readable table/chart)
+- 🔲 **Initial SoDEX integration (read-first)**: read-only `24h_volume`, `tvl`, `latest_swap` as a supporting signal card
+- 🔲 **Cross-Signal Agent v1**: horizontal reasoning across SoSoValue + CoinGecko + SoDEX with conflict detection and safe-action self-check
+- 🔲 **UX measurement phase**: instrumentation + CTA A/B (`result_view → cta_click_sosovalue`) to drive Wave 3 restructuring decisions
+- 🔲 **Education micro-cards (beginner-first)**: short explainers ("Why this score?", "What this does NOT mean?") directly under result actions
 - 🔲 Data-driven SSI ↔ anchor-coin mapping (remove the hardcoded list)
-- 🔲 **UX measurement phase**: core analytics instrumentation + CTA color A/B test (`result_view → cta_click_sosovalue`)
-- 🔲 **Weighted scoring v1**: introduce explicit signal weights (volatility / momentum / flow / bias) as a documented model
+- 🔲 JA UI layer (minimum viable i18n)
 
 ### Wave 3 — Build Phase II *(Jun 4 – Jun 15)*
 *Official Focus: risk control, confirmation mechanism, security awareness, polished demo.*
 
-- 🔲 **Risk control** — server-side validation that re-checks LLM output against numeric inputs before display
-- 🔲 **Confirmation mechanism** — second-opinion read from SoDEX latest swap before the SSI CTA fires
-- 🔲 **Security awareness** module: explicit checklist (no wallet / no key custody / read-only sources)
-- 🔲 Multilingual UI (ZH)
-- 🔲 Polished demo + Demo Day storyline
-- 🔲 **Major UX restructuring**: result first-view redesign (conclusion-first hierarchy) based on Wave2 measurement
-- 🔲 **Policy-table decision engine**: replace branching heuristics with auditable rule tables
-- 🔲 **Backtest threshold validation**: verify score/risk cutoffs against multi-period historical outcomes
+- 🔲 **Risk Control core (highest priority)**: policy-table decision engine + server-side AI output validation + loss/stress simulation + stronger behavioral-bias safeguards
+- 🔲 **Crypto Stocks × S&P500 Cross Analysis (Plan C)**: Coinbase / MicroStrategy-style bridge view in S&P500-familiar volatility language (explicitly not a lockstep-correlation claim)
+- 🔲 **Productized education layer**: beginner learning path blocks tied to decisions (not generic long-form content)
+- 🔲 **Major UX restructuring**: conclusion-first first-view using Wave 2 measurement results
+- 🔲 **Backtest upgrade**: move from Wave 1 proxy to multi-horizon validation views and threshold checks
+- 🔲 **Security awareness + confirmation flow**: explicit checklist and second-opinion before external CTA
+- 🔲 ZH UI layer + polished final demo / Demo Day narrative
+
+**Scoped intentionally (post-Wave 3 or optional only):**
+- NFT pledge minting, full community platform features, and full monetization implementation (subscription/B2B2C/data-sales) are kept as roadmap options, not Wave 2–3 core deliverables.
+- **Fundraising × Market Impact (Plan B)** is treated as a limited Wave 3 case-study module after core risk-control and cross-analysis are complete.
 
 > UX planning docs: [`docs/設計書/UI/README.md`](docs/設計書/UI/README.md), [`docs/設計書/UI/ux_wireframe_v1.md`](docs/設計書/UI/ux_wireframe_v1.md), [`docs/設計書/UI/analytics_event_dictionary_v1.md`](docs/設計書/UI/analytics_event_dictionary_v1.md), [`docs/設計書/UI/event_payload_template_v1.md`](docs/設計書/UI/event_payload_template_v1.md)
 
